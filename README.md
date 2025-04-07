@@ -27,7 +27,7 @@ __Цель данной работы__ - разработать интерпре
 
 ### Пример 1
 
-```
+```pascal
 program Example1;
 const
     Pi: double = 3.1415926;
@@ -53,7 +53,7 @@ end.
 
 ### Пример 2
 
-```
+```pascal
 program Example2;
 const
     e : double = 2.71828;
