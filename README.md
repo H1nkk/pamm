@@ -50,3 +50,42 @@ begin
 end.
 
 ```
+
+### Пример 2
+
+```
+program Example2;
+const
+    e : double = 2.71828;
+var
+    opcode, operand1, operand2, Res: integer;
+    foo1, foo2: double;
+begin
+    WriteLn('*** Программа-калькулятор ***');
+    Write('Введите "1" для сложения, "2" для вычитания: ');
+    Read(opcode);
+    if (opcode <> 1) and (opcode <> 2) then 
+      begin
+        Write('Неверный ввод');
+      end
+    else
+      begin
+        Write('Введите первый операнд: ');
+    	  Read(operand1);
+    	  Write('Введите второй операнд: ');
+    	  Read(operand2);
+        if (opcode = 1) then
+          begin
+            Res := operand1 + operand2;
+            Write('Результат = ', Res);
+         end
+        else
+          if (opcode = 2) then
+            begin
+              Res := operand1 - operand2;
+              Write('Результат = ', Res);
+          end
+      end
+        
+end.
+```
