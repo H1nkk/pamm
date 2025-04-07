@@ -85,7 +85,9 @@ begin
               Res := operand1 - operand2;
               Write('Результат = ', Res);
           end
-      end
-        
+      end       
 end.
 ```
+## Описание синтаксиса
+
+В начале кода ставится program *<Название программы>*;
