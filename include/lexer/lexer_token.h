@@ -12,7 +12,7 @@ namespace Lexer {
         CALC, DERX, DERY, DERZ, DERW,
         INTX, INTY, INTZ, INTW,
         INVALID,
-        ENDOFFILE
+        ENDOFFILE // TODO: fix
     };
 
     std::string toString(TokenType type);

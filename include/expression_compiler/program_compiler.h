@@ -2,17 +2,17 @@
 #include <variant>
 #include <vector>
 #include "lexer/lexer_token.h"
-#include "expression_interpreter/expression_interpreter.h"
-#include "polynomial.h"
+#include "execution_context.h"
+#include "operation.h"
 #include "syntax_error.h"
 
 namespace Compiler {
-    class ExpressionCompiler final
+    class PostfixCompiler final
     {
     public:
         /// @brief Преобразовать последовательность токенов в программу для интерпретации
         /// @param tokens Последовательность токенов, которую нужно скомпилировать
         /// @return Программа или синтаксическая ошибка
-        std::variant<Intr::Program, SyntaxError> compileExpression(const std::vector<Lexer::Token>& tokens);
+        static std::variant<ExecutionContext, SyntaxError> compileProgram(const std::vector<Lexer::Token>& tokens);
     };
 }

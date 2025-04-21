@@ -1,7 +1,8 @@
 #pragma once
 #include <variant>
+#include "data_values.h"
 #include <string>
-#include "polynomial.h"
+#include <vector>
 
 namespace Intr {
     enum class Opcode
@@ -9,11 +10,11 @@ namespace Intr {
         ASSIGN,
         ADD, SUBTRACT, MULT, POWER, UMINUS,
         CALC, DERX, DERY, DERZ, DERW,
-        INTX, INTY, INTZ, INTW
+        INTX, INTY, INTZ, INTW // TODO: fix
     };
 
-    // Код операции/полином/идентификатор/число
-    using Op = std::variant<Opcode, Polynomial, std::string, double, unsigned long>;
+    using Op = std::variant<Opcode, DataValue>;
+    using Program = std::vector<Op>;
 
     std::string toString(Opcode opcode);
 }
