@@ -1,5 +1,5 @@
 #include <gtest/gtest.h>
-#include "lexer/lexer.h"
+#include "expression_compiler/postfix_compiler.h"
 
 TEST(PostfixCompilerTest, can_compile_single_number)
 {
@@ -32,6 +32,11 @@ TEST(PostfixText, can_compile_subtraction)
 }
 
 TEST(PostfixText, can_compile_float_division)
+{
+    ADD_FAILURE();
+}
+
+TEST(PostfixCompilerTest, can_compile_remainder)
 {
     ADD_FAILURE();
 }
@@ -129,6 +134,11 @@ TEST(PostfixCompilerTest, exception_on_binary_operator_without_left_argument)
 }
 
 TEST(PostfixCompilerTest, exception_on_binary_operator_without_right_argument)
+{
+    ADD_FAILURE();
+}
+
+TEST(PostfixCompilerTest, exception_on_unknown_var_const_name_used)
 {
     ADD_FAILURE();
 }
