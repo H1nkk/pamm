@@ -1,57 +1,57 @@
 #include <gtest/gtest.h>
 #include "table.h"
 
-TEST(TableTest, defaultTableConstructor)
+TEST(TableTest, default_table_constructor)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, canAddWithUnpresentKey)
+TEST(TableTest, can_add_with_not_existing_key)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, cannotAddWithPresentKey)
+TEST(TableTest, cant_add_with_existing_key)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, canFindWithExsistingKey)
+TEST(TableTest, can_find_with_existing_key)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, cannotFindWithUnexsistingKey)
+TEST(TableTest, cant_find_with_not_existing_key)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, canDelPresentEntry)
+TEST(TableTest, can_del_existing_entry)
 {
     ADD_FAILURE(); 
 }
 
-TEST(TableTest, delOfUnpresentEntryDoesNothing)
+TEST(TableTest, del_of_not_existing_entry_does_nothing)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, canGetSizeWhenEmpty)
+TEST(TableTest, can_get_size_when_empty)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, canGetSizeWhenNonEmpty)
+TEST(TableTest, can_get_size_when_non_empty)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, emptyTableIsEmpty)
+TEST(TableTest, empty_table_is_empty)
 {
     ADD_FAILURE();
 }
 
-TEST(TableTest, nonEmptyTableIsNonEmpty)
+TEST(TableTest, non_empty_table_is_non_empty)
 {
     ADD_FAILURE();
 }
