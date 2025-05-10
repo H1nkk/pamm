@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
-#include "lexer_token.h"
-#include "operation.h"
+#include "lexer/lexer_token.h"
+#include "expression_interpreter/operation.h"
 
-class ExecutionContext;
+struct ExecutionContext;
 
 class ExecutionNode {
 private:
@@ -28,6 +28,9 @@ class BlockNode : public ExecutionNode {
 public:
     BlockNode(ExecutionNode* pNext, ExecutionNode* pChild)
         : ExecutionNode(pNext, pChild) {}
+
+    virtual void execute(const ExecutionContext& context) override;
+    virtual ~BlockNode() {}
 };
 
 class WriteNode : public ExecutionNode {

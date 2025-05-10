@@ -2,7 +2,7 @@
 #include <variant>
 #include <vector>
 #include "lexer/lexer_token.h"
-#include "operation.h"
+#include "expression_interpreter/operation.h"
 #include "syntax_error.h"
 
 namespace Compiler {

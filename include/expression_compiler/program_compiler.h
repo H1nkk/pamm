@@ -2,8 +2,8 @@
 #include <variant>
 #include <vector>
 #include "lexer/lexer_token.h"
-#include "execution_context.h"
-#include "operation.h"
+#include "expression_interpreter/execution_context.h"
+#include "expression_interpreter/operation.h"
 #include "syntax_error.h"
 
 namespace Compiler {
