@@ -5,14 +5,17 @@ namespace Lexer {
     enum class TokenType
     {
         NONE,
-        FLOAT, INT,
-        ID, X, Y, Z, W,
-        LPAR, RPAR,
-        PLUS, MINUS, MULT, CARET, ASSIGN, COMMA,
-        CALC, DERX, DERY, DERZ, DERW,
-        INTX, INTY, INTZ, INTW,
+        FLOAT, INT, ID, STRING,
+        PROGRAM,
+        CONST, VAR, BEGIN, END, DOT, COMMA, SEMICOLON, COLON,
+        LPAREM, RPAREN,
+        IF, THEN, ELSE,
+        ASSIGN, PLUS, MINUS, MULT, DIV, DIVINT, MOD, REMAINDER,
+        EQUAL, LESS, GREATER, LESSEQUAL, GREATEREQUAL, NOTEQUAL,
+        AND, OR, NOT,
+
         INVALID,
-        ENDOFFILE // TODO: fix
+        ENDOFFILE
     };
 
     std::string toString(TokenType type);
