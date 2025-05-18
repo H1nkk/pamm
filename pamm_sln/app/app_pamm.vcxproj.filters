@@ -15,34 +15,40 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="D:\pamm\include\calculator.h">
+    <ClInclude Include="D:\pamm\include\data_values.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\pamm\include\expression_compiler\expression_compiler.h">
+    <ClInclude Include="D:\pamm\include\execution_driver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\pamm\include\execution_node.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\pamm\include\expression_compiler\postfix_compiler.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\pamm\include\expression_compiler\postfix_member.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="D:\pamm\include\expression_interpreter\expression_interpreter.h">
+    <ClInclude Include="D:\pamm\include\expression_compiler\program_compiler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\pamm\include\expression_interpreter\execution_context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\pamm\include\expression_interpreter\operation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\pamm\include\expression_interpreter\postfix_interpreter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\pamm\include\expression_interpreter\program_interpreter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\pamm\include\lexer\lexer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\pamm\include\lexer\lexer_token.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D:\pamm\include\linked_list.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D:\pamm\include\polynomial.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="D:\pamm\include\red_black_tree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="D:\pamm\include\stack.h">

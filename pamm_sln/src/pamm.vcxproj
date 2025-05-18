@@ -156,23 +156,27 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D:\pamm\src\expression_compiler\expression_compiler.cpp" />
-    <ClCompile Include="D:\pamm\src\expression_interpreter\expression_interpreter.cpp" />
+    <ClCompile Include="D:\pamm\src\execution_driver.cpp" />
+    <ClCompile Include="D:\pamm\src\execution_node.cpp" />
+    <ClCompile Include="D:\pamm\src\expression_compiler\postfix_compiler.cpp" />
+    <ClCompile Include="D:\pamm\src\expression_compiler\program_compiler.cpp" />
     <ClCompile Include="D:\pamm\src\expression_interpreter\operation.cpp" />
+    <ClCompile Include="D:\pamm\src\expression_interpreter\postfix_interpreter.cpp" />
+    <ClCompile Include="D:\pamm\src\expression_interpreter\program_interpreter.cpp" />
     <ClCompile Include="D:\pamm\src\lexer\lexer.cpp" />
     <ClCompile Include="D:\pamm\src\lexer\lexer_token.cpp" />
-    <ClCompile Include="D:\pamm\src\polynomial.cpp" />
-    <ClCompile Include="D:\pamm\src\table.cpp" />
-    <ClInclude Include="D:\pamm\include\calculator.h" />
-    <ClInclude Include="D:\pamm\include\expression_compiler\expression_compiler.h" />
+    <ClInclude Include="D:\pamm\include\data_values.h" />
+    <ClInclude Include="D:\pamm\include\execution_driver.h" />
+    <ClInclude Include="D:\pamm\include\execution_node.h" />
+    <ClInclude Include="D:\pamm\include\expression_compiler\postfix_compiler.h" />
     <ClInclude Include="D:\pamm\include\expression_compiler\postfix_member.h" />
-    <ClInclude Include="D:\pamm\include\expression_interpreter\expression_interpreter.h" />
+    <ClInclude Include="D:\pamm\include\expression_compiler\program_compiler.h" />
+    <ClInclude Include="D:\pamm\include\expression_interpreter\execution_context.h" />
     <ClInclude Include="D:\pamm\include\expression_interpreter\operation.h" />
+    <ClInclude Include="D:\pamm\include\expression_interpreter\postfix_interpreter.h" />
+    <ClInclude Include="D:\pamm\include\expression_interpreter\program_interpreter.h" />
     <ClInclude Include="D:\pamm\include\lexer\lexer.h" />
     <ClInclude Include="D:\pamm\include\lexer\lexer_token.h" />
-    <ClInclude Include="D:\pamm\include\linked_list.h" />
-    <ClInclude Include="D:\pamm\include\polynomial.h" />
-    <ClInclude Include="D:\pamm\include\red_black_tree.h" />
     <ClInclude Include="D:\pamm\include\stack.h" />
     <ClInclude Include="D:\pamm\include\syntax_error.h" />
     <ClInclude Include="D:\pamm\include\table.h" />

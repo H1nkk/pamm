@@ -184,13 +184,12 @@ if %errorlevel% neq 0 goto :VCEnd</Command>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="D:\pamm\test\test_expr_compiler.cpp" />
-    <ClCompile Include="D:\pamm\test\test_interpreter.cpp" />
+    <ClCompile Include="D:\pamm\test\test_execution_node.cpp" />
     <ClCompile Include="D:\pamm\test\test_lexer.cpp" />
-    <ClCompile Include="D:\pamm\test\test_linked_list.cpp" />
     <ClCompile Include="D:\pamm\test\test_main.cpp" />
-    <ClCompile Include="D:\pamm\test\test_polynomial.cpp" />
-    <ClCompile Include="D:\pamm\test\test_red_black_tree.cpp" />
+    <ClCompile Include="D:\pamm\test\test_postfix_compiler.cpp" />
+    <ClCompile Include="D:\pamm\test\test_postfix_interpreter.cpp" />
+    <ClCompile Include="D:\pamm\test\test_program_compiler.cpp" />
     <ClCompile Include="D:\pamm\test\test_stack.cpp" />
     <ClCompile Include="D:\pamm\test\test_table.cpp" />
   </ItemGroup>
