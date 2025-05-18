@@ -44,20 +44,6 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QPushButton" name="pushButton_2">
-          <property name="text">
-           <string>File</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="pushButton">
-          <property name="text">
-           <string>Run program</string>
-          </property>
-         </widget>
-        </item>
-        <item>
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Orientation::Horizontal</enum>
@@ -69,6 +55,19 @@
            </size>
           </property>
          </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushButton">
+          <property name="maximumSize">
+           <size>
+            <width>80</width>
+            <height>24</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Run</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -97,7 +96,6 @@
           <property name="font">
            <font>
             <family>Cascadia Mono</family>
-            <bold>false</bold>
            </font>
           </property>
           <property name="cursor" stdset="0">
@@ -109,15 +107,32 @@
           <property name="focusPolicy">
            <enum>Qt::FocusPolicy::ClickFocus</enum>
           </property>
+          <property name="styleSheet">
+           <string notr="true">QTableWidget {
+	color: rgb(200,200,200);
+	background-color: rgb(30,30,30);
+	border: none;
+}
+
+</string>
+          </property>
           <property name="editTriggers">
            <set>QAbstractItemView::EditTrigger::AllEditTriggers</set>
           </property>
           <property name="rowCount">
-           <number>2</number>
+           <number>10</number>
           </property>
           <property name="columnCount">
            <number>1</number>
           </property>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
+          <row/>
           <row/>
           <row/>
           <column/>

@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QFont>
+#include <QTimer>
 #include <QItemDelegate>
 #include <string>
 #include <algorithm>
@@ -21,6 +22,7 @@ class TableEditor;
 int globalRowWidth = 30;
 int globalCharacterWidth = 7;
 TableEditor* pInputTable;
+int pos = 0;
 
 class TableEditor : public QTableWidget 
 {
@@ -28,7 +30,7 @@ class TableEditor : public QTableWidget
 
 public:
     TableEditor(QTableWidget* parent) : QTableWidget(parent) {
-        globalCharacterWidth = QFontMetrics(font()).averageCharWidth();
+        //globalCharacterWidth = QFontMetrics(font()).averageCharWidth();
     }
     int cursorColumn = 0;
 
@@ -52,14 +54,44 @@ protected:
         }
         else if (event->key() == Qt::Key_Backspace) { // TODO Добавить key_delete
             
-            qDebug() << "text: ";
             int curRow = currentRow();
             QTableWidgetItem* curItem = currentItem();
 
             qDebug() << "text: " << curItem->text();
 
             if (curItem->text() == "") {
+                if (currentRow() == 0) return;
+
+                int newRow = max(0, currentRow() - 1);
+
                 removeRow(currentRow());
+
+                setCurrentCell(newRow, 0);
+                QTableWidgetItem* pItem = currentItem();
+                cursorColumn = pItem->text().length();
+
+                QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
+
+                edit(index);
+
+                QWidget* editor = indexWidget(index);
+                if (!editor) return;
+
+                QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, newRow * globalRowWidth } - visualRect(index).topLeft();
+
+                if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
+                {
+                    lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
+                }
+                else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
+                {
+                    QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
+                    textEdit->setTextCursor(cursor);
+                }
+
+
+
+                return;
             }
             else {
                 QTableWidget::keyPressEvent(event);
@@ -166,13 +198,15 @@ protected:
             }
             else
             {
-                if (currentRow() == 0) return;
+                bool change = true;
+                if (currentRow() == 0) change = false;
 
                 int newRow = max(0, currentRow() - 1);
 
                 setCurrentCell(newRow, 0);
                 QTableWidgetItem* pItem = currentItem();
-                cursorColumn = pItem->text().length();
+                if (change)
+                    cursorColumn = pItem->text().length();
 
                 QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
 
@@ -229,10 +263,13 @@ protected:
                 return;
             }
             else {
-                if (currentRow() == rowCount() - 1) return;
+                bool change = true;
+                if (currentRow() == rowCount() - 1) change = false;
 
-                cursorColumn = 0;
-                int newRow = currentRow() + 1;
+                if (change)
+                    cursorColumn = 0;
+
+                int newRow = min(currentRow() + 1, rowCount() - 1);
                 setCurrentCell(newRow, 0);
 
                 QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
@@ -296,6 +333,48 @@ protected:
         qDebug() << "index: " << event->pos().x() - visualRect(index).topLeft().x() << " " << event->pos().y();
 
     }
+
+public:
+
+    void update() {
+        QTableWidgetItem* curItem = currentItem();
+        if (!curItem) {
+            qDebug() << "bug";
+            return;
+        }
+        QString text = currentItem()->text();
+        qDebug() << "LUFE";
+
+        closePersistentEditor(currentItem());
+        editItem(curItem);
+        curItem->setText(text);
+        /*QModelIndex index = currentIndex();
+        if (!index.isValid()) return;
+
+        QString text = currentItem()->text();
+        int cursorPos = 0;
+        if (QLineEdit* editor = qobject_cast<QLineEdit*>(indexWidget(index))) {
+            cursorPos = editor->cursorPosition();
+        }
+
+        closePersistentEditor(currentItem());
+        edit(index);
+        
+        QWidget* editor = indexWidget(index);
+
+        QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, currentRow() * globalRowWidth } - visualRect(index).topLeft();
+
+        if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
+        {
+            lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
+        }
+        else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
+        {
+            QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
+            textEdit->setTextCursor(cursor);
+        }
+        return;*/
+    }
 };
 
 class CustomDelegate : public QItemDelegate {
@@ -304,6 +383,8 @@ public:
 
     QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
         QWidget* editor = QItemDelegate::createEditor(parent, option, index);
+
+        editor->setFont(QFont("Cascadia Mono"));
 
         if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor)) {
             lineEdit->installEventFilter(const_cast<CustomDelegate*>(this));
@@ -315,10 +396,46 @@ public:
         if (event->type() == QEvent::KeyPress) {
             QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
 
-            if (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right) {
+            if (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right ) {
+                //QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor);
+                //if (!lineEdit) return false;
+
+                //QString currentText = lineEdit->text();
+                //int cursorPos = lineEdit->cursorPosition();
+
+                //// Закрываем редактор
+                //closeEditor(lineEdit, QAbstractItemDelegate::NoHint);
+
+                //// Обновляем значение ячейки (иначе будет потеря текста)
+                //QTableWidgetItem* item = pInputTable->currentItem();
+                //if (item) item->setText(currentText);
+
+                //// Открываем редактор заново
+                //QModelIndex index = pInputTable->currentIndex();
+                //pInputTable->edit(index);
+
+                //QWidget* newEditor = pInputTable->indexWidget(index);
+                //if (QLineEdit* newLineEdit = qobject_cast<QLineEdit*>(newEditor)) {
+                //    newLineEdit->setCursorPosition(cursorPos > 0 ? cursorPos - 1 : 0);  // left или right можно скорректировать
+                //}
+
+                //return true;
+
+
+                //pInputTable->update();
+
+
+                commitData(qobject_cast<QWidget*>(editor));
+                closeEditor(qobject_cast<QWidget*>(editor), QAbstractItemDelegate::NoHint);
+
                 qDebug() << "Left or right key pressed in editor!";
+
                 pInputTable->keyPressEvent(keyEvent);
                 return true;
+            }
+            if (keyEvent->key() == Qt::Key_Backspace) {
+                qDebug() << "backspace key pressed in editor!";
+                pInputTable->keyPressEvent(keyEvent);
             }
         }
         return QItemDelegate::eventFilter(editor, event);
@@ -345,6 +462,10 @@ int main(int argc, char* argv[])
     pInputTable->setColumnWidth(0, 10000);
     pInputTable->setCursor(Qt::IBeamCursor);
     pInputTable->setFont(QFont("Cascadia Mono")); // TODO с этой строкой иногда лагает :) Хотя лаги не из-за нее, а изза "QAbstractItemView::commitData called with an editor that does not belong to this view"
+    pInputTable->horizontalHeader()->hide();
+    pInputTable->setShowGrid(false);
+    pInputTable->setContentsMargins(0, 0, 0, 0);
+
 
     window.show();
     return app.exec();

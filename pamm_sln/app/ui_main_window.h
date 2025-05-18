@@ -41,9 +41,8 @@ public:
     QVBoxLayout *verticalLayout_2;
     QVBoxLayout *verticalLayout;
     QHBoxLayout *horizontalLayout;
-    QPushButton *pushButton_2;
-    QPushButton *pushButton;
     QSpacerItem *horizontalSpacer;
+    QPushButton *pushButton;
     QVBoxLayout *verticalLayout_3;
     QTableWidget *tableWidget;
     QMenuBar *menubar;
@@ -88,19 +87,15 @@ public:
         verticalLayout->setContentsMargins(20, 20, 20, 20);
         horizontalLayout = new QHBoxLayout();
         horizontalLayout->setObjectName("horizontalLayout");
-        pushButton_2 = new QPushButton(centralwidget);
-        pushButton_2->setObjectName("pushButton_2");
-
-        horizontalLayout->addWidget(pushButton_2);
-
-        pushButton = new QPushButton(centralwidget);
-        pushButton->setObjectName("pushButton");
-
-        horizontalLayout->addWidget(pushButton);
-
         horizontalSpacer = new QSpacerItem(40, 20, QSizePolicy::Policy::Expanding, QSizePolicy::Policy::Minimum);
 
         horizontalLayout->addItem(horizontalSpacer);
+
+        pushButton = new QPushButton(centralwidget);
+        pushButton->setObjectName("pushButton");
+        pushButton->setMaximumSize(QSize(80, 24));
+
+        horizontalLayout->addWidget(pushButton);
 
 
         verticalLayout->addLayout(horizontalLayout);
@@ -111,8 +106,8 @@ public:
         tableWidget = new QTableWidget(centralwidget);
         if (tableWidget->columnCount() < 1)
             tableWidget->setColumnCount(1);
-        if (tableWidget->rowCount() < 2)
-            tableWidget->setRowCount(2);
+        if (tableWidget->rowCount() < 10)
+            tableWidget->setRowCount(10);
         QTableWidgetItem *__qtablewidgetitem = new QTableWidgetItem();
         tableWidget->setItem(0, 0, __qtablewidgetitem);
         QTableWidgetItem *__qtablewidgetitem1 = new QTableWidgetItem();
@@ -127,13 +122,19 @@ public:
         tableWidget->setMinimumSize(QSize(0, 0));
         QFont font;
         font.setFamilies({QString::fromUtf8("Cascadia Mono")});
-        font.setBold(false);
         tableWidget->setFont(font);
         tableWidget->viewport()->setProperty("cursor", QVariant(QCursor(Qt::CursorShape::IBeamCursor)));
         tableWidget->setMouseTracking(true);
         tableWidget->setFocusPolicy(Qt::FocusPolicy::ClickFocus);
+        tableWidget->setStyleSheet(QString::fromUtf8("QTableWidget {\n"
+"	color: rgb(200,200,200);\n"
+"	background-color: rgb(30,30,30);\n"
+"	border: none;\n"
+"}\n"
+"\n"
+""));
         tableWidget->setEditTriggers(QAbstractItemView::EditTrigger::AllEditTriggers);
-        tableWidget->setRowCount(2);
+        tableWidget->setRowCount(10);
         tableWidget->setColumnCount(1);
 
         verticalLayout_3->addWidget(tableWidget);
@@ -180,8 +181,7 @@ public:
         actiondfgh->setText(QCoreApplication::translate("MainWindow", "dfgh", nullptr));
         actiondfgh_2->setText(QCoreApplication::translate("MainWindow", "dfgh", nullptr));
         actiondfgh_3->setText(QCoreApplication::translate("MainWindow", "dfgh", nullptr));
-        pushButton_2->setText(QCoreApplication::translate("MainWindow", "File", nullptr));
-        pushButton->setText(QCoreApplication::translate("MainWindow", "Run program", nullptr));
+        pushButton->setText(QCoreApplication::translate("MainWindow", "Run", nullptr));
 
         const bool __sortingEnabled = tableWidget->isSortingEnabled();
         tableWidget->setSortingEnabled(false);
