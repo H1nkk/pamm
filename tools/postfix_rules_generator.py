@@ -4,10 +4,15 @@ from tkinter import ttk, messagebox
 import os
 
 tokens = [
-    "NONE", "FLOAT", "INT", "ID", "X", "Y", "Z", "W",
-    "LPAR", "RPAR", "PLUS", "MINUS", "MULT", "CARET", "ASSIGN", "COMMA",
-    "CALC", "DERX", "DERY", "DERZ", "DERW", "INTX", "INTY", "INTZ", "INTW",
-    "INVALID", "ENDOFFILE"
+    "NONE",
+    "FLOAT", "INT", "ID",
+    "COMMA",
+    "LPAREN", "RPAREN",
+    "PLUS", "MINUS", "MULT", "DIV", "DIVINT", "MOD",
+    "EQUAL", "LESS", "GREATER", "LESSEQUAL", "GREATEREQUAL", "NOTEQUAL",
+    "AND", "OR", "NOT",
+
+    "ENDOFFILE"
 ]
 
 class TokenMatrixApp:
