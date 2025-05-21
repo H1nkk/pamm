@@ -41,7 +41,7 @@ namespace Lexer {
         { "mod", TokenType::MOD },
         { "and", TokenType::AND },
         { "or", TokenType::OR },
-        { "Not", TokenType::NOT },
+        { "not", TokenType::NOT },
     };
 
     void Lexer::generateTokens()
@@ -67,9 +67,16 @@ namespace Lexer {
                     if (compositeSpecialSymbols.find(mText.substr(index, 2)) != compositeSpecialSymbols.end())
                     {
                         TokenType type = compositeSpecialSymbols.at(mText.substr(index, 2));
-                        Token tok = Token(type, std::string(2, mText[index]), index, index + 2);
+                        Token tok = Token(type, mText.substr(index, 2), index, index + 2);
                         mTokens.push_back(tok);
                         index += 2;
+                    }
+                    else
+                    {
+                        TokenType type = specialSymbols.at(mText[index]);
+                        Token tok = Token(type, std::string(1, mText[index]), index, index + 1);
+                        mTokens.push_back(tok);
+                        ++index;
                     }
                 }
                 else
@@ -113,10 +120,32 @@ namespace Lexer {
             {
                 // Найдена строка 
                 std::string str;
-                while (index < mText.size() && mText[index] != '\'')
-                    str.push_back(mText[index++]);
+                bool correctnessStr = false;
+                bool nextSymbolIncluded = false;
+                str.push_back(mText[index++]);
+                while (index < mText.size())
+                {
+                    if (mText[index] == '\\')
+                    {
+                        nextSymbolIncluded = true;
+                        str.push_back(mText[index++]);
+                    }
+                    else if (nextSymbolIncluded)
+                    {
+                        nextSymbolIncluded = false;
+                        str.push_back(mText[index++]);
+                    }
+                    else if (mText[index] != '\'')
+                        str.push_back(mText[index++]);
+                    else
+                    {
+                        correctnessStr = true;
+                        str.push_back(mText[index++]);
+                        break;
+                    }
+                }
 
-                if (str.back() == '\'')
+                if (correctnessStr)
                     mTokens.push_back(Token(TokenType::STRING, str, index - str.size(), index));
                 else
                     mTokens.push_back(Token(TokenType::INVALID, str, index - str.size(), index));
