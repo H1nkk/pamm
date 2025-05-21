@@ -56,8 +56,13 @@ public:
         keywords.push_back("and"); color["and"] = QColor(37, 99, 187);
         keywords.push_back("or"); color["or"] = QColor(37, 99, 187);
         keywords.push_back("not"); color["not"] = QColor(37, 99, 187);
+
+        keywords.push_back("mod"); color["mod"] = QColor(254, 122, 116);
+        keywords.push_back("div"); color["div"] = QColor(254, 122, 116);
         
-        for (auto keyword : keywords) // keyword highlighting
+        
+        // keywords highlighting
+        for (auto keyword : keywords) 
         {
             QTextCharFormat format;
             format.setForeground(color[keyword]);
@@ -73,11 +78,19 @@ public:
         QTextCharFormat singleQuoteFormat;
         singleQuoteFormat.setForeground(QColor(214, 157, 127));
 
-        HighlightingRule rule;
-        rule.pattern = QRegularExpression(R"('([^'\\]|\\.)*')"); // одинарные кавычки и всё между ними
-        rule.format = singleQuoteFormat;
-        highlightingRules.append(rule);
+        HighlightingRule quotesRule;
+        quotesRule.pattern = QRegularExpression(R"('([^'\\]|\\.)*')"); // одинарные кавычки и всё между ними
+        quotesRule.format = singleQuoteFormat;
+        highlightingRules.append(quotesRule);
 
+        // numbers highlighting
+        QTextCharFormat numbersFormat;
+        numbersFormat.setForeground(QColor(184, 215, 161));
+
+        HighlightingRule numbersRule;
+        numbersRule.pattern = QRegularExpression(R"(\b\d+(\.\d+)?\b)"); // numbers
+        numbersRule.format = numbersFormat;
+        highlightingRules.append(numbersRule);
     }
 
 protected:
