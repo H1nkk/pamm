@@ -38,17 +38,25 @@ public:
         keywords.push_back("if"); color["if"] = QColor(215, 177, 238);
         keywords.push_back("then"); color["then"] = QColor(215, 177, 238);
         keywords.push_back("else"); color["else"] = QColor(215, 177, 238);
+
         keywords.push_back("double"); color["double"] = QColor(84, 135, 166);
         keywords.push_back("integer"); color["integer"] = QColor(84, 135, 166);
+
         keywords.push_back("program"); color["program"] = QColor(202, 39, 57);
+
         keywords.push_back("begin"); color["begin"] = QColor(171, 91, 219);
         keywords.push_back("end"); color["end"] = QColor(171, 91, 219);
         keywords.push_back("var"); color["var"] = QColor(171, 91, 219);
         keywords.push_back("const"); color["const"] = QColor(171, 91, 219);
+
         keywords.push_back("Write"); color["Write"] = QColor(221, 221, 170);
         keywords.push_back("WriteLn"); color["WriteLn"] = QColor(221, 221, 170);
         keywords.push_back("Read"); color["Read"] = QColor(221, 221, 170);
 
+        keywords.push_back("and"); color["and"] = QColor(37, 99, 187);
+        keywords.push_back("or"); color["or"] = QColor(37, 99, 187);
+        keywords.push_back("not"); color["not"] = QColor(37, 99, 187);
+        
         for (auto keyword : keywords) // keyword highlighting
         {
             QTextCharFormat format;
