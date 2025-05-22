@@ -148,7 +148,7 @@ void changeMainTextScrollBar(Ui::MainWindow* ui) {
     ui->textEdit->verticalScrollBar()->setValue(ui->rowNumbersContainer->verticalScrollBar()->value());
 }
 
-void refreshRowNumbers(Ui::MainWindow* ui) { // TODO
+void refreshRowNumbers(Ui::MainWindow* ui) {
     int rows = ui->textEdit->toPlainText().count("\n") + 1;
     QString result;
     for (int i = 1; i <= rows; i++) {
@@ -252,13 +252,6 @@ int main(int argc, char* argv[])
 
     QPlainTextEdit* editor = ui.textEdit;
     new MyHighlighter(editor->document());
-
-    //ui.rowNumbersContainer->verticalScrollBar()->blockSignals(true);
-
-    //CodeEditor* editor = new CodeEditor(editor);
-    //editor->setPlainText("program HelloWorld;\nbegin\n  WriteLn('Hello, world!');\nend.");
-    //ui->layout->addWidget(editor); // или просто editor->show();
-
 
     QObject::connect(ui.actionOpen, &QAction::triggered, [&]() {
         if (onOpenButtonClicked(&ui, currentFilename)) {
