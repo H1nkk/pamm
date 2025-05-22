@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QItemDelegate>
 #include <QPlainTextEdit>
+#include <QScrollBar>
 #include <string>
 #include <algorithm>
 #include <sstream>
@@ -17,6 +18,7 @@
 #include "ui_main_window.h"
 #include "ui_info_widget.h"
 #include "table.h"
+#include "CodeEditor.h"
 
 using namespace std;
 
@@ -30,10 +32,18 @@ bool firstTime = true;
 class MyHighlighter : public QSyntaxHighlighter {
 public:
     MyHighlighter(QTextDocument* parent = nullptr) : QSyntaxHighlighter(parent) {
-
         vector<QString> keywords;
 
         map<QString, QColor> color;
+
+        // numbers highlighting
+        QTextCharFormat numbersFormat;
+        numbersFormat.setForeground(QColor(184, 215, 161));
+
+        HighlightingRule numbersRule;
+        numbersRule.pattern = QRegularExpression(R"(\b\d+(\.\d+)?\b)"); // numbers
+        numbersRule.format = numbersFormat;
+        highlightingRules.append(numbersRule);
 
         keywords.push_back("if"); color["if"] = QColor(215, 177, 238);
         keywords.push_back("then"); color["then"] = QColor(215, 177, 238);
@@ -60,13 +70,11 @@ public:
         keywords.push_back("mod"); color["mod"] = QColor(254, 122, 116);
         keywords.push_back("div"); color["div"] = QColor(254, 122, 116);
         
-        
         // keywords highlighting
         for (auto keyword : keywords) 
         {
             QTextCharFormat format;
             format.setForeground(color[keyword]);
-            //format.setFontWeight(QFont::Bold);
 
             HighlightingRule rule;
             rule.pattern = QRegularExpression("\\b" + keyword + "\\b");
@@ -82,15 +90,6 @@ public:
         quotesRule.pattern = QRegularExpression(R"('([^'\\]|\\.)*')"); // одинарные кавычки и всё между ними
         quotesRule.format = singleQuoteFormat;
         highlightingRules.append(quotesRule);
-
-        // numbers highlighting
-        QTextCharFormat numbersFormat;
-        numbersFormat.setForeground(QColor(184, 215, 161));
-
-        HighlightingRule numbersRule;
-        numbersRule.pattern = QRegularExpression(R"(\b\d+(\.\d+)?\b)"); // numbers
-        numbersRule.format = numbersFormat;
-        highlightingRules.append(numbersRule);
     }
 
 protected:
@@ -113,9 +112,51 @@ private:
     QVector<HighlightingRule> highlightingRules;
 };
 
+void highlightCurrentLine(Ui::MainWindow* ui) {
+    QPlainTextEdit* editor = ui->textEdit;
+    QList<QTextEdit::ExtraSelection> extraSelections;
 
-void refreshRowNumbers() {
+    if (!editor->isReadOnly()) {
+        QTextEdit::ExtraSelection selection;
 
+        QColor lineColor = QColor(55,55,55);
+
+        QTextCharFormat format;
+        format.setBackground(lineColor);
+
+        selection.format = format;
+        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        if (!editor->textCursor().isNull()) {
+            selection.cursor = editor->textCursor();
+            selection.cursor.clearSelection();
+            extraSelections.append(selection);
+        }
+    }
+
+    ui->textEdit->setExtraSelections(extraSelections);
+}
+
+void run(Ui::MainWindow* ui) { // TODO
+
+}
+
+void changeRowScrollBar(Ui::MainWindow* ui) {
+    ui->rowNumbersContainer->verticalScrollBar()->setValue(ui->textEdit->verticalScrollBar()->value());
+}
+
+void changeMainTextScrollBar(Ui::MainWindow* ui) {
+    ui->textEdit->verticalScrollBar()->setValue(ui->rowNumbersContainer->verticalScrollBar()->value());
+}
+
+void refreshRowNumbers(Ui::MainWindow* ui) { // TODO
+    int rows = ui->textEdit->toPlainText().count("\n") + 1;
+    QString result;
+    for (int i = 1; i <= rows; i++) {
+        result += to_string(i);
+        if (i != rows)
+            result += '\n';
+    }
+    ui->rowNumbersContainer->setPlainText(result);
 }
 
 bool saveExisting(Ui::MainWindow* ui, const QString& curFilename) {
@@ -209,8 +250,15 @@ int main(int argc, char* argv[])
 
     QString currentFilename;
 
-    QPlainTextEdit* editor = ui.textEdit;  // если вы заменили QLineEdit на QTextEdit
+    QPlainTextEdit* editor = ui.textEdit;
     new MyHighlighter(editor->document());
+
+    //ui.rowNumbersContainer->verticalScrollBar()->blockSignals(true);
+
+    //CodeEditor* editor = new CodeEditor(editor);
+    //editor->setPlainText("program HelloWorld;\nbegin\n  WriteLn('Hello, world!');\nend.");
+    //ui->layout->addWidget(editor); // или просто editor->show();
+
 
     QObject::connect(ui.actionOpen, &QAction::triggered, [&]() {
         if (onOpenButtonClicked(&ui, currentFilename)) {
@@ -219,7 +267,7 @@ int main(int argc, char* argv[])
             firstTime = false;
         }
 
-        refreshRowNumbers();
+        refreshRowNumbers(&ui);
         });
 
     QObject::connect(ui.actionSave, &QAction::triggered, [&]() {
@@ -229,7 +277,7 @@ int main(int argc, char* argv[])
             firstTime = false;
         }
 
-        refreshRowNumbers();
+        refreshRowNumbers(&ui);
         });
 
     QObject::connect(ui.actionSave_as, &QAction::triggered, [&]() {
@@ -239,12 +287,32 @@ int main(int argc, char* argv[])
             firstTime = false;
         }
 
-        refreshRowNumbers();
+        refreshRowNumbers(&ui);
         });
 
-    QLineEdit::connect(ui.fileNameContainer, &QLineEdit::textChanged, [&]() {
+    QObject::connect(ui.runButton, &QPushButton::clicked, [&]() {
+        run(&ui);
+        });
+
+    QObject::connect(ui.fileNameContainer, &QLineEdit::textChanged, [&]() {
         ui.fileNameContainer->setToolTip(ui.fileNameContainer->text());
         });
+
+    QObject::connect(ui.textEdit, &QPlainTextEdit::textChanged, [&]() {
+        refreshRowNumbers(&ui);
+        });
+
+    QObject::connect(ui.textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [&]() {
+        changeRowScrollBar(&ui);
+        });
+
+    QObject::connect(ui.rowNumbersContainer->verticalScrollBar(), &QScrollBar::valueChanged, [&]() {
+        changeMainTextScrollBar(&ui);
+        });
+
+    //QObject::connect(ui.textEdit, &QPlainTextEdit::cursorPositionChanged, [&]() { // CRASHES
+    //    highlightCurrentLine(&ui);
+    //    });
 
     ui.actionSave->setShortcut(QKeySequence("Ctrl+S"));
     ui.actionOpen->setShortcut(QKeySequence("Ctrl+O"));
