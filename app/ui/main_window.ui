@@ -138,7 +138,10 @@
                <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="contextMenuPolicy">
-               <enum>Qt::ContextMenuPolicy::ActionsContextMenu</enum>
+               <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+              </property>
+              <property name="layoutDirection">
+               <enum>Qt::LayoutDirection::LeftToRight</enum>
               </property>
               <property name="verticalScrollBarPolicy">
                <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
@@ -146,11 +149,19 @@
               <property name="horizontalScrollBarPolicy">
                <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
               </property>
+              <property name="lineWrapMode">
+               <enum>QPlainTextEdit::LineWrapMode::NoWrap</enum>
+              </property>
               <property name="readOnly">
                <bool>true</bool>
               </property>
               <property name="plainText">
-               <string>1</string>
+               <string>1
+
+</string>
+              </property>
+              <property name="overwriteMode">
+               <bool>false</bool>
               </property>
               <property name="textInteractionFlags">
                <set>Qt::TextInteractionFlag::NoTextInteraction</set>
