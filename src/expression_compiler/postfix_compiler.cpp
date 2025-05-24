@@ -226,8 +226,7 @@ namespace Compiler {
 
                 mTypes.push(type);
                 mProg.push_back({ Intr::Opcode::LOAD, id });
-            }
-            else if (token.type() == TokenType::INT)
+            } else if (token.type() == TokenType::INT)
             {
                 try
                 {
@@ -243,8 +242,7 @@ namespace Compiler {
                 {
                     throw SyntaxError{ token.startPos(), "Too big integer" };
                 }
-            }
-            else if (token.type() == TokenType::FLOAT)
+            } else if (token.type() == TokenType::FLOAT)
             {
                 try
                 {
@@ -260,8 +258,7 @@ namespace Compiler {
                 {
                     throw SyntaxError{ token.startPos(), "Too big double" };
                 }
-            }
-            else
+            } else
             {
                 throw std::runtime_error(__FUNCTION__ ": invalid value type.");
             }
@@ -295,10 +292,10 @@ namespace Compiler {
             }
 
             mTypes.push(inpType);
-            
+
             std::string typeName = mExecContext.typeStorage().getTypeInfo(inpType).value().name();
             throw SyntaxError{ mTokens[member.tokenIndex()].startPos(),
-                "No suitable operator '" + mTokens[member.tokenIndex()].value() +"' found for type " + typeName };
+                "No suitable operator '" + mTokens[member.tokenIndex()].value() + "' found for type " + typeName };
         }
 
         void compileBinaryOp(const PostfixMember& member)
@@ -333,8 +330,8 @@ namespace Compiler {
 
             std::string typeNameL = mExecContext.typeStorage().getTypeInfo(leftType).value().name();
             std::string typeNameR = mExecContext.typeStorage().getTypeInfo(rightType).value().name();
-            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(), 
-                "No suitable operator '" + mTokens[member.tokenIndex()].value() + "' found for types: " + typeNameL + ", " + typeNameR};
+            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(),
+                "No suitable operator '" + mTokens[member.tokenIndex()].value() + "' found for types: " + typeNameL + ", " + typeNameR };
         }
 
         void compileFunction(const PostfixMember& member, size_t argCount)
@@ -412,12 +409,11 @@ namespace Compiler {
                     // function
                     compileFunction(mStack.top(), argCount);
                     argCount = 1;
-                }
-                else
+                } else
                 {
                     // unary
                     if (argCount != 1)
-                        throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Too many arguments"};
+                        throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Too many arguments" };
 
                     compileUnaryOp(mStack.top());
                 }
@@ -447,7 +443,8 @@ namespace Compiler {
             mCur = mMembers[mMemberIndex++];
 
             if (!validateSeq(prevType(), curType()))
-                throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Unexpected token" }; // TODO: move this to preprocess
+                throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(),
+                    "Unexpected token '" + mTokens[mCur.tokenIndex()].value() + "'" };
         }
 
         bool isMember(PostfixMember::Type type)
@@ -522,7 +519,7 @@ namespace Compiler {
                     && mStack.top().type() == PostfixMember::BINARYOP
                     && precedence <= getBinaryOperatorPrecedence(mTokens[mStack.top().tokenIndex()]))
                 {
-                    
+
                     compileBinaryOp(mStack.top());
                     mStack.pop();
                 }

@@ -6,7 +6,6 @@
 //{
 //    ADD_FAILURE();
 //}
-//
 
 
 #include <gtest/gtest.h>
