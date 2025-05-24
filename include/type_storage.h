@@ -17,7 +17,7 @@ public:
     std::string name() const { return mName; }
     size_t size() const { return mSize; }
 
-    bool operator==(const DataType& other) const { return mName == other.mName; }
+    bool operator==(const DataType& other) const { return mName == other.mName && mSize == other.mSize; }
 };
 
 class TypeStorage final

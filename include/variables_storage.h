@@ -30,7 +30,8 @@ private:
 
     size_t mNextLiteralIndex;
 public:
-    VariablesStorage(const TypeStorage& TypeStorage) : mTypeStorage(TypeStorage) {}
+    VariablesStorage(const TypeStorage& TypeStorage) : mTypeStorage(TypeStorage),
+        mNextLiteralIndex(0) {}
 
     std::optional<VariableId> getId(const std::string& name) const
     {
@@ -48,6 +49,9 @@ public:
             throw std::runtime_error(__FUNCTION__ ": variable is already registered.");
 
         size_t dataSize = mTypeStorage.getTypeInfo(info.type()).value().size();
+
+        if (sizeof(T) != dataSize)
+            throw std::runtime_error(__FUNCTION__ ": type size doesn't match value size");
 
         VariableId id = static_cast<VariableId>(mInfos.size());
         mInfos.push_back(info);
@@ -110,6 +114,6 @@ public:
             throw std::runtime_error(__FUNCTION__ ": variable doesn't exist.");
 
         size_t memIndex = mMemoryIndices[index];
-        return *reinterpret_cast<T*>(*mMemory[memIndex]);
+        return *reinterpret_cast<const T*>(&mMemory[memIndex]);
     }
 };

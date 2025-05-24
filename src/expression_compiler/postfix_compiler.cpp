@@ -69,7 +69,7 @@ namespace Compiler {
         { TokenType::MULT, { "$operator*", 105, OpAssociativity::LEFTTORIGHT }},
         { TokenType::DIV, { "$operator/", 105, OpAssociativity::LEFTTORIGHT }},
         { TokenType::DIVINT, { "$operatordiv", 105, OpAssociativity::LEFTTORIGHT }},
-        { TokenType::MOD, { "$operatorod", 105, OpAssociativity::LEFTTORIGHT }}
+        { TokenType::MOD, { "$operatormod", 105, OpAssociativity::LEFTTORIGHT }}
     };
 
     const static std::unordered_set<std::pair<PostfixMember::Type, PostfixMember::Type>, MemberTypePairHasher> validMemberSequences{
@@ -161,6 +161,8 @@ namespace Compiler {
     class CompilationContext final
     {
     private:
+        ExecutionContext& mExecContext;
+
         std::vector<Token> mTokens;
         std::vector<PostfixMember> mMembers;
         Intr::Program mProg;
@@ -172,7 +174,6 @@ namespace Compiler {
         PostfixMember mPrev;
         PostfixMember mCur;
 
-        ExecutionContext& mExecContext;
 
         std::vector<PostfixMember> preprocess(const std::vector<Token> tokens) const
         {
@@ -296,7 +297,8 @@ namespace Compiler {
             mTypes.push(inpType);
             
             std::string typeName = mExecContext.typeStorage().getTypeInfo(inpType).value().name();
-            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(), "No suitable operator found for type " + typeName };
+            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(),
+                "No suitable operator '" + mTokens[member.tokenIndex()].value() +"' found for type " + typeName };
         }
 
         void compileBinaryOp(const PostfixMember& member)
@@ -331,7 +333,8 @@ namespace Compiler {
 
             std::string typeNameL = mExecContext.typeStorage().getTypeInfo(leftType).value().name();
             std::string typeNameR = mExecContext.typeStorage().getTypeInfo(rightType).value().name();
-            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(), "No suitable operator found for types: " + typeNameL + ", " + typeNameR };
+            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(), 
+                "No suitable operator '" + mTokens[member.tokenIndex()].value() + "' found for types: " + typeNameL + ", " + typeNameR};
         }
 
         void compileFunction(const PostfixMember& member, size_t argCount)
@@ -563,7 +566,7 @@ namespace Compiler {
                 } else if (ctx.isMember(PostfixMember::RPAREN) || ctx.isMember(PostfixMember::END))
                 {
                     ctx.closeBlock();
-                } else if (ctx.isMember(PostfixMember::UNARYOP))
+                } else if (ctx.isMember(PostfixMember::UNARYOP) || ctx.isMember(PostfixMember::FUNCCALL))
                 {
                     ctx.addUnaryOp();
                 } else if (ctx.isMember(PostfixMember::BINARYOP))
