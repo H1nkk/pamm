@@ -4,15 +4,10 @@ from tkinter import ttk, messagebox
 import os
 
 tokens = [
-    "NONE",
-    "FLOAT", "INT", "ID",
-    "COMMA",
-    "LPAREN", "RPAREN",
-    "PLUS", "MINUS", "MULT", "DIV", "DIVINT", "MOD",
-    "EQUAL", "LESS", "GREATER", "LESSEQUAL", "GREATEREQUAL", "NOTEQUAL",
-    "AND", "OR", "NOT",
-
-    "ENDOFFILE"
+    "NONE", "END",
+    
+    "VALUE", "FUNCCALL",
+    "LPAREN", "RPAREN", "COMMA", "BINARYOP", "UNARYOP"
 ]
 
 class TokenMatrixApp:
@@ -80,7 +75,7 @@ class TokenMatrixApp:
     
     def save_data(self):
         allowed_pairs = [
-            f"{{ Lexer::TokenType::{t1}, Lexer::TokenType::{t2} }},"
+            f"{{ {t1}, {t2} }},"
             for (t1, t2), var in self.check_vars.items() if var.get()
         ]
         
@@ -99,7 +94,7 @@ class TokenMatrixApp:
         allowed_pairs = set()
         for line in lines:
             line = line.strip().strip("{},")
-            parts = line.replace("Lexer::TokenType::", "").split(",")
+            parts = line.split(",")
             if len(parts) == 2:
                 t1, t2 = parts[0].strip(), parts[1].strip()
                 allowed_pairs.add((t1, t2))

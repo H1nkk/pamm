@@ -3,484 +3,487 @@
 #include "lexer/lexer_token.h"
 #include "stack.h"
 #include "data_values.h"
+#include "type_storage.h"
+#include "variables_storage.h"
+#include "function_storage.h"
+#include "expression_interpreter/execution_context.h"
 #include <unordered_set>
 #include <unordered_map>
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <sstream>
 
 namespace Compiler {
 
     using Lexer::Token;
     using Lexer::TokenType;
 
-    struct TokenTypePairHasher
+    struct MemberTypePairHasher
     {
-        size_t operator()(std::pair<TokenType, TokenType> t) const
+        size_t operator()(std::pair<PostfixMember::Type, PostfixMember::Type> t) const
         {
             return static_cast<size_t>(t.first) * 1000 + static_cast<size_t>(t.second);
         }
     };
 
-    const static std::unordered_set<std::pair<TokenType, TokenType>, TokenTypePairHasher> validTokenSequences{
-        { Lexer::TokenType::NONE, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::NONE, Lexer::TokenType::INT },
-    { Lexer::TokenType::NONE, Lexer::TokenType::ID },
-    { Lexer::TokenType::NONE, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::NONE, Lexer::TokenType::MINUS },
-    { Lexer::TokenType::NONE, Lexer::TokenType::NOT },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::COMMA },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::RPAREN },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::PLUS },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::MINUS },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::MULT },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::DIV },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::DIVINT },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::MOD },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::EQUAL },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::LESS },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::GREATER },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::LESSEQUAL },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::GREATEREQUAL },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::NOTEQUAL },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::AND },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::OR },
-    { Lexer::TokenType::FLOAT, Lexer::TokenType::ENDOFFILE },
-    { Lexer::TokenType::INT, Lexer::TokenType::COMMA },
-    { Lexer::TokenType::INT, Lexer::TokenType::RPAREN },
-    { Lexer::TokenType::INT, Lexer::TokenType::PLUS },
-    { Lexer::TokenType::INT, Lexer::TokenType::MINUS },
-    { Lexer::TokenType::INT, Lexer::TokenType::MULT },
-    { Lexer::TokenType::INT, Lexer::TokenType::DIV },
-    { Lexer::TokenType::INT, Lexer::TokenType::DIVINT },
-    { Lexer::TokenType::INT, Lexer::TokenType::MOD },
-    { Lexer::TokenType::INT, Lexer::TokenType::EQUAL },
-    { Lexer::TokenType::INT, Lexer::TokenType::LESS },
-    { Lexer::TokenType::INT, Lexer::TokenType::GREATER },
-    { Lexer::TokenType::INT, Lexer::TokenType::LESSEQUAL },
-    { Lexer::TokenType::INT, Lexer::TokenType::GREATEREQUAL },
-    { Lexer::TokenType::INT, Lexer::TokenType::NOTEQUAL },
-    { Lexer::TokenType::INT, Lexer::TokenType::AND },
-    { Lexer::TokenType::INT, Lexer::TokenType::OR },
-    { Lexer::TokenType::INT, Lexer::TokenType::ENDOFFILE },
-    { Lexer::TokenType::ID, Lexer::TokenType::COMMA },
-    { Lexer::TokenType::ID, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::ID, Lexer::TokenType::RPAREN },
-    { Lexer::TokenType::ID, Lexer::TokenType::PLUS },
-    { Lexer::TokenType::ID, Lexer::TokenType::MINUS },
-    { Lexer::TokenType::ID, Lexer::TokenType::MULT },
-    { Lexer::TokenType::ID, Lexer::TokenType::DIV },
-    { Lexer::TokenType::ID, Lexer::TokenType::DIVINT },
-    { Lexer::TokenType::ID, Lexer::TokenType::MOD },
-    { Lexer::TokenType::ID, Lexer::TokenType::EQUAL },
-    { Lexer::TokenType::ID, Lexer::TokenType::LESS },
-    { Lexer::TokenType::ID, Lexer::TokenType::GREATER },
-    { Lexer::TokenType::ID, Lexer::TokenType::LESSEQUAL },
-    { Lexer::TokenType::ID, Lexer::TokenType::GREATEREQUAL },
-    { Lexer::TokenType::ID, Lexer::TokenType::NOTEQUAL },
-    { Lexer::TokenType::ID, Lexer::TokenType::AND },
-    { Lexer::TokenType::ID, Lexer::TokenType::OR },
-    { Lexer::TokenType::ID, Lexer::TokenType::ENDOFFILE },
-    { Lexer::TokenType::COMMA, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::COMMA, Lexer::TokenType::INT },
-    { Lexer::TokenType::COMMA, Lexer::TokenType::ID },
-    { Lexer::TokenType::COMMA, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::COMMA, Lexer::TokenType::MINUS },
-    { Lexer::TokenType::COMMA, Lexer::TokenType::NOT },
-    { Lexer::TokenType::LPAREN, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::LPAREN, Lexer::TokenType::INT },
-    { Lexer::TokenType::LPAREN, Lexer::TokenType::ID },
-    { Lexer::TokenType::LPAREN, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::LPAREN, Lexer::TokenType::MINUS },
-    { Lexer::TokenType::LPAREN, Lexer::TokenType::NOT },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::COMMA },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::RPAREN },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::PLUS },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::MINUS },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::MULT },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::DIV },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::DIVINT },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::MOD },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::EQUAL },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::LESS },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::GREATER },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::LESSEQUAL },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::GREATEREQUAL },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::NOTEQUAL },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::AND },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::OR },
-    { Lexer::TokenType::RPAREN, Lexer::TokenType::ENDOFFILE },
-    { Lexer::TokenType::PLUS, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::PLUS, Lexer::TokenType::INT },
-    { Lexer::TokenType::PLUS, Lexer::TokenType::ID },
-    { Lexer::TokenType::PLUS, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::MINUS, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::MINUS, Lexer::TokenType::INT },
-    { Lexer::TokenType::MINUS, Lexer::TokenType::ID },
-    { Lexer::TokenType::MINUS, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::MULT, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::MULT, Lexer::TokenType::INT },
-    { Lexer::TokenType::MULT, Lexer::TokenType::ID },
-    { Lexer::TokenType::MULT, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::DIV, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::DIV, Lexer::TokenType::INT },
-    { Lexer::TokenType::DIV, Lexer::TokenType::ID },
-    { Lexer::TokenType::DIV, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::DIVINT, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::DIVINT, Lexer::TokenType::INT },
-    { Lexer::TokenType::DIVINT, Lexer::TokenType::ID },
-    { Lexer::TokenType::DIVINT, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::MOD, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::MOD, Lexer::TokenType::INT },
-    { Lexer::TokenType::MOD, Lexer::TokenType::ID },
-    { Lexer::TokenType::MOD, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::EQUAL, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::EQUAL, Lexer::TokenType::INT },
-    { Lexer::TokenType::EQUAL, Lexer::TokenType::ID },
-    { Lexer::TokenType::EQUAL, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::LESS, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::LESS, Lexer::TokenType::INT },
-    { Lexer::TokenType::LESS, Lexer::TokenType::ID },
-    { Lexer::TokenType::LESS, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::GREATER, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::GREATER, Lexer::TokenType::INT },
-    { Lexer::TokenType::GREATER, Lexer::TokenType::ID },
-    { Lexer::TokenType::GREATER, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::LESSEQUAL, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::LESSEQUAL, Lexer::TokenType::INT },
-    { Lexer::TokenType::LESSEQUAL, Lexer::TokenType::ID },
-    { Lexer::TokenType::LESSEQUAL, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::GREATEREQUAL, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::GREATEREQUAL, Lexer::TokenType::INT },
-    { Lexer::TokenType::GREATEREQUAL, Lexer::TokenType::ID },
-    { Lexer::TokenType::GREATEREQUAL, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::NOTEQUAL, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::NOTEQUAL, Lexer::TokenType::INT },
-    { Lexer::TokenType::NOTEQUAL, Lexer::TokenType::ID },
-    { Lexer::TokenType::NOTEQUAL, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::AND, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::AND, Lexer::TokenType::INT },
-    { Lexer::TokenType::AND, Lexer::TokenType::ID },
-    { Lexer::TokenType::AND, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::OR, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::OR, Lexer::TokenType::INT },
-    { Lexer::TokenType::OR, Lexer::TokenType::ID },
-    { Lexer::TokenType::OR, Lexer::TokenType::LPAREN },
-    { Lexer::TokenType::NOT, Lexer::TokenType::FLOAT },
-    { Lexer::TokenType::NOT, Lexer::TokenType::INT },
-    { Lexer::TokenType::NOT, Lexer::TokenType::ID },
-    { Lexer::TokenType::NOT, Lexer::TokenType::LPAREN },
+    enum class OpAssociativity
+    {
+        LEFTTORIGHT,
+        RIGHTTOLEFT
     };
 
-    const static std::vector<BinaryOperatorInfo> binaryOperatorInfos = {};
-    const static std::vector<UnaryOperatorInfo> unaryOperatorInfos = {};
-    const static std::vector<FunctionInfo> functionInfos = {};
-    const static std::vector<TypeCastingInfo> typeCastInfos = {};
-
-    bool validateToken(TokenType prev, TokenType cur)
+    struct OperatorMapping
     {
-        return validTokenSequences.count({ prev, cur }) > 0;
+        std::string funcName;
+    };
+
+    struct BinaryOperatorMapping : public OperatorMapping
+    {
+        int precedence;
+        OpAssociativity associativity;
+    };
+
+    const static std::unordered_map<TokenType, OperatorMapping> unaryOperatorMappings = {
+        { TokenType::MINUS, { "$operator-" }},
+        { TokenType::NOT, { "$operatornot"} },
+    };
+
+    const static std::unordered_map<TokenType, BinaryOperatorMapping> binaryOperatorMappings = {
+        // or
+        { TokenType::OR, { "$operatoror", 100, OpAssociativity::LEFTTORIGHT }},
+        // and
+        { TokenType::AND, { "$operatorand", 101, OpAssociativity::LEFTTORIGHT }},
+        // equality
+        { TokenType::EQUAL, { "$operator=", 102, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::NOTEQUAL, { "$operator<>", 102, OpAssociativity::LEFTTORIGHT }},
+        // comparison
+        { TokenType::LESS, { "$operator<", 103, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::LESSEQUAL, { "$operator<=", 103, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::GREATER, { "$operator>", 103, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::GREATEREQUAL, { "$operator>=", 103, OpAssociativity::LEFTTORIGHT }},
+        // additive
+        { TokenType::PLUS, { "$operator+", 104, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::MINUS, { "$operator-", 104, OpAssociativity::LEFTTORIGHT }},
+        // multiplicative
+        { TokenType::MULT, { "$operator*", 105, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::DIV, { "$operator/", 105, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::DIVINT, { "$operatordiv", 105, OpAssociativity::LEFTTORIGHT }},
+        { TokenType::MOD, { "$operatorod", 105, OpAssociativity::LEFTTORIGHT }}
+    };
+
+    const static std::unordered_set<std::pair<PostfixMember::Type, PostfixMember::Type>, MemberTypePairHasher> validMemberSequences{
+        { PostfixMember::NONE, PostfixMember::VALUE },
+        { PostfixMember::NONE, PostfixMember::FUNCCALL },
+        { PostfixMember::NONE, PostfixMember::LPAREN },
+        { PostfixMember::NONE, PostfixMember::UNARYOP },
+        { PostfixMember::VALUE, PostfixMember::END },
+        { PostfixMember::VALUE, PostfixMember::RPAREN },
+        { PostfixMember::VALUE, PostfixMember::COMMA },
+        { PostfixMember::VALUE, PostfixMember::BINARYOP },
+        { PostfixMember::FUNCCALL, PostfixMember::LPAREN },
+        { PostfixMember::LPAREN, PostfixMember::VALUE },
+        { PostfixMember::LPAREN, PostfixMember::FUNCCALL },
+        { PostfixMember::LPAREN, PostfixMember::LPAREN },
+        { PostfixMember::LPAREN, PostfixMember::UNARYOP },
+        { PostfixMember::RPAREN, PostfixMember::END },
+        { PostfixMember::RPAREN, PostfixMember::VALUE },
+        { PostfixMember::RPAREN, PostfixMember::RPAREN },
+        { PostfixMember::RPAREN, PostfixMember::COMMA },
+        { PostfixMember::RPAREN, PostfixMember::BINARYOP },
+        { PostfixMember::COMMA, PostfixMember::VALUE },
+        { PostfixMember::COMMA, PostfixMember::FUNCCALL },
+        { PostfixMember::COMMA, PostfixMember::LPAREN },
+        { PostfixMember::COMMA, PostfixMember::UNARYOP },
+        { PostfixMember::BINARYOP, PostfixMember::VALUE },
+        { PostfixMember::BINARYOP, PostfixMember::FUNCCALL },
+        { PostfixMember::BINARYOP, PostfixMember::LPAREN },
+        { PostfixMember::BINARYOP, PostfixMember::UNARYOP },
+        { PostfixMember::UNARYOP, PostfixMember::VALUE },
+        { PostfixMember::UNARYOP, PostfixMember::FUNCCALL },
+        { PostfixMember::UNARYOP, PostfixMember::LPAREN },
+    };
+
+    bool validateSeq(PostfixMember::Type prev, PostfixMember::Type cur)
+    {
+        return validMemberSequences.count({ prev, cur }) > 0;
     }
 
     bool isBinaryOperator(const Token& token)
     {
-        for (const auto& row : binaryOperatorInfos)
-        {
-            if (row.opType() == token.type())
-                return true;
-        }
-
-        return false;
+        return binaryOperatorMappings.contains(token.type());
     }
 
-    bool isPrefixOperator(const Token& token)
+    OpAssociativity getBinaryOperatorAssociativity(const Token& token)
     {
-        if (token.type() == TokenType::ID)
-        {
-            for (const auto& row : functionInfos)
-            {
-                if (row.name() == token.value())
-                    return true;
-            }
-        }
-        else
-        {
-            for (const auto& row : unaryOperatorInfos)
-            {
-                if (row.opType() == token.type())
-                    return true;
-            }
-        }
+        return binaryOperatorMappings.at(token.type()).associativity;
+    }
+
+    int getBinaryOperatorPrecedence(const Token& token)
+    {
+        return binaryOperatorMappings.at(token.type()).precedence;
+    }
+
+    bool isUnaryOperator(const Token& token)
+    {
+        return unaryOperatorMappings.contains(token.type());
 
         return false;
     }
 
-    bool isFunction(const Token& token)
+    bool isFunction(const Token& token, const FunctionStorage& funcStorage)
     {
         if (token.type() != TokenType::ID)
             return false;
 
-        for (const auto& row : functionInfos)
-        {
-            if (row.name() == token.value())
-                return true;
-        }
-
-        return false;
+        return funcStorage.isFunctionName(token.value());
     }
 
-    PostfixMember toMember(Token token, bool unary = false)
+    bool isValue(const Token& token, const TypeStorage& typeStorage)
     {
-        if (token.type() == TokenType::LPAREN) return PostfixMember(token);
-        else if (token.type() == TokenType::ID)
-        {
-            if (unary)
-            {
-                // function name
-                return PostfixMember(token, 0, true);
-            }
-            else
-            {
-                // variable
-                return PostfixMember(token);
-            }
-        }
-        
-        if (unary)
-        {
-            for (const auto& row : unaryOperatorInfos)
-            {
-                if (row.opType() == token.type()) return PostfixMember(token, 0, true);
-            }
-        }
-        else
-        {
-            for (const auto& row : binaryOperatorInfos)
-            {
-                if (row.opType() == token.type()) return PostfixMember(token, row.precedence(), false, row.associativity());
-            }
-        }
-        
+        TokenType type = token.type();
+        if (type != TokenType::ID
+            && type != TokenType::INT
+            && type != TokenType::FLOAT)
+            return false;
 
-        throw std::invalid_argument(__FUNCTION__ ": Unknown operation provided");
+        if (type == TokenType::ID
+            && typeStorage.isTypeName(token.value()))
+            return false;
+
+        return true;
     }
 
     struct CompilationBlock
     {
-        TokenType startTokenType;
+        PostfixMember::Type startMemberType;
         size_t commaCount;
     };
-
 
     class CompilationContext final
     {
     private:
         std::vector<Token> mTokens;
+        std::vector<PostfixMember> mMembers;
         Intr::Program mProg;
         Stack<PostfixMember> mStack;
         Stack<CompilationBlock> mBlocks;
-        Stack<DataType> mTypes;
+        Stack<DataTypeId> mTypes;
 
-        size_t mTokIndex;
-        Token mPrev;
-        Token mTok;
+        size_t mMemberIndex;
+        PostfixMember mPrev;
+        PostfixMember mCur;
 
-        Intr::Op compileOperation(const PostfixMember& member)
+        ExecutionContext& mExecContext;
+
+        std::vector<PostfixMember> preprocess(const std::vector<Token> tokens) const
         {
-            if (member.type() == TokenType::ID)
+            std::vector<PostfixMember> res;
+            res.reserve(tokens.size() + 2);
+
+            PostfixMember::Type prev = PostfixMember::NONE;
+            for (size_t i = 0; i < tokens.size(); i++)
             {
-                if (member.isPrefixOp())
-                {
-                    // as function
+                const auto& tok = tokens[i];
 
-                    for (const auto& row : functionInfos)
-                    {
-                        if (row.name() != member.token().value()) continue;
-                        if (mTypes.size() < row.argumentsCount()) continue;
-
-                        bool valid = true;
-
-                        Stack<DataType> tmp;
-                        for (int i = row.argumentsCount() - 1; i >= 0; --i)
-                        {
-                            DataType type = mTypes.top();
-                            if (row.getArgument(i) != type)
-                                valid = false;
-
-                            tmp.push(type);
-                            mTypes.pop();
-                        }
-
-                        if (!valid)
-                        {
-                            while (tmp.size())
-                            {
-                                mTypes.push(tmp.top());
-                                tmp.pop();
-                            }
-                            continue;
-                        }
-
-                        mTypes.push(row.returnType());
-
-                        return row.opCode;
-                    }
-
-                    throw SyntaxError{ member.token().startPos(), "No suitable function found for name " + member.token().value() + " and provided arguments."};
-                }
+                if (tok.type() == TokenType::ENDOFFILE)
+                    res.push_back({ PostfixMember::END, i });
+                else if (tok.type() == TokenType::LPAREN)
+                    res.push_back({ PostfixMember::LPAREN, i });
+                else if (tok.type() == TokenType::RPAREN)
+                    res.push_back({ PostfixMember::RPAREN, i });
+                else if (tok.type() == TokenType::COMMA)
+                    res.push_back({ PostfixMember::COMMA, i });
+                else if (isFunction(tok, mExecContext.functionStorage()))
+                    res.push_back({ PostfixMember::FUNCCALL, i });
+                else if (isUnaryOperator(tok) && validateSeq(prev, PostfixMember::UNARYOP))
+                    res.push_back({ PostfixMember::UNARYOP, i });
+                else if (isBinaryOperator(tok))
+                    res.push_back({ PostfixMember::BINARYOP, i });
+                else if (isValue(tok, mExecContext.typeStorage()))
+                    res.push_back({ PostfixMember::VALUE, i });
                 else
+                    throw SyntaxError{ tok.startPos(), "Unexpected token in expression" };
+
+                prev = res.back().type();
+            }
+
+            return res;
+        }
+
+        void compileValue(const PostfixMember& member)
+        {
+            // resolve name or literal to id and add instr, add datatype to stack
+            Token token = mTokens[member.tokenIndex()];
+
+            if (token.type() == TokenType::ID)
+            {
+                if (!mExecContext.variableStorage().isVariableName(token.value()))
                 {
-                    // as variable name
-                    mTypes.push() // хахах теперь надо уметь получать тип данных через таблицу
-                    // вернуть айди для чтения
+                    throw SyntaxError{ token.startPos(), "Unknown variable '" + token.value() + "' used" };
+                }
+
+                VariableId id = mExecContext.variableStorage().getId(token.value()).value();
+                DataTypeId type = mExecContext.variableStorage().getInfo(id).type();
+
+                mTypes.push(type);
+                mProg.push_back({ Intr::Opcode::LOAD, id });
+            }
+            else if (token.type() == TokenType::INT)
+            {
+                try
+                {
+                    long long val = std::stoll(token.value());
+
+                    DataTypeId type = mExecContext.typeStorage().getTypeId("integer").value();
+                    VariableId id = mExecContext.variableStorage().getIdByLiteral(type, val);
+
+                    mTypes.push(type);
+                    mProg.push_back({ Intr::Opcode::LOAD, id });
+                }
+                catch (std::out_of_range)
+                {
+                    throw SyntaxError{ token.startPos(), "Too big integer" };
                 }
             }
-            
-            if (member.isPrefixOp())
+            else if (token.type() == TokenType::FLOAT)
             {
-                if (mTypes.size() < 1)
+                try
                 {
-                    throw std::runtime_error(__FUNCTION__ ": compilation error occurred.");
+                    double val = std::stod(token.value());
+
+                    DataTypeId type = mExecContext.typeStorage().getTypeId("double").value();
+                    VariableId id = mExecContext.variableStorage().getIdByLiteral(type, val);
+
+                    mTypes.push(type);
+                    mProg.push_back({ Intr::Opcode::LOAD, id });
                 }
-
-                DataType opType = mTypes.top();
-                mTypes.pop();
-
-                for (const auto& row : unaryOperatorInfos)
+                catch (std::out_of_range)
                 {
-                    if (row.opType() != member.type()) continue;
-                    if (row.inputType() != opType) continue;
-
-                    mTypes.push(row.outputType());
-                    return row.opCode;
+                    throw SyntaxError{ token.startPos(), "Too big double" };
                 }
-
-                mTypes.push(opType);
-
-                throw SyntaxError{ member.token().startPos(), "No suitable operator found for type " + mTypes.top().name() };
             }
             else
             {
-                if (mTypes.size() < 2)
-                {
-                    throw std::runtime_error(__FUNCTION__ ": compilation error occurred.");
-                }
-
-                DataType rightType = mTypes.top();
-                mTypes.pop();
-                DataType leftType = mTypes.top();
-                mTypes.pop();
-
-                for (const auto& row : binaryOperatorInfos)
-                {
-                    if (row.opType() != member.type()) continue;
-                    if (leftType != row.leftType() || rightType != row.rightType()) continue;
-
-                    mTypes.push(row.returnType());
-                    return row.opCode;
-                }
-
-                mTypes.push(leftType);
-                mTypes.push(rightType);
-
-                throw SyntaxError{ member.token().startPos(), "No suitable operator found for types: " + leftType.name() + ", " + rightType.name() };
+                throw std::runtime_error(__FUNCTION__ ": invalid value type.");
             }
 
-            throw std::runtime_error(__FUNCTION__ ": compilation error occurred.");
+            compilePrefixOps(1);
         }
 
-        void compileToTok(const std::vector<TokenType>& types, bool popFound)
+        void compileUnaryOp(const PostfixMember& member)
+        {
+            if (mTypes.size() < 1)
+            {
+                throw std::runtime_error(__FUNCTION__ ": compilation error occurred.");
+            }
+
+            DataTypeId inpType = mTypes.top();
+            mTypes.pop();
+
+            TokenType opType = mTokens[member.tokenIndex()].type();
+
+            auto suitableFunc = mExecContext.functionStorage().findFunction(
+                unaryOperatorMappings.at(opType).funcName, { inpType }
+            );
+
+            if (suitableFunc.has_value())
+            {
+                const auto& func = suitableFunc.value();
+
+                mTypes.push(func.returnType());
+                mProg.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                return;
+            }
+
+            mTypes.push(inpType);
+            
+            std::string typeName = mExecContext.typeStorage().getTypeInfo(inpType).value().name();
+            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(), "No suitable operator found for type " + typeName };
+        }
+
+        void compileBinaryOp(const PostfixMember& member)
+        {
+            if (mTypes.size() < 2)
+            {
+                throw std::runtime_error(__FUNCTION__ ": compilation error occurred.");
+            }
+
+            DataTypeId rightType = mTypes.top();
+            mTypes.pop();
+            DataTypeId leftType = mTypes.top();
+            mTypes.pop();
+
+            TokenType opType = mTokens[member.tokenIndex()].type();
+
+            auto suitableFunc = mExecContext.functionStorage().findFunction(
+                binaryOperatorMappings.at(opType).funcName, { leftType, rightType }
+            );
+
+            if (suitableFunc.has_value())
+            {
+                const auto& func = suitableFunc.value();
+
+                mTypes.push(func.returnType());
+                mProg.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                return;
+            }
+
+            mTypes.push(leftType);
+            mTypes.push(rightType);
+
+            std::string typeNameL = mExecContext.typeStorage().getTypeInfo(leftType).value().name();
+            std::string typeNameR = mExecContext.typeStorage().getTypeInfo(rightType).value().name();
+            throw SyntaxError{ mTokens[member.tokenIndex()].startPos(), "No suitable operator found for types: " + typeNameL + ", " + typeNameR };
+        }
+
+        void compileFunction(const PostfixMember& member, size_t argCount)
+        {
+            if (mTypes.size() < argCount)
+                throw std::runtime_error(__FUNCTION__ ": type checking stack error.");
+
+            Token token = mTokens[member.tokenIndex()];
+            std::string funcName = token.value();
+
+            std::vector<DataTypeId> argTypes;
+            argTypes.reserve(argCount);
+
+            for (size_t i = 0; i < argCount; i++)
+            {
+                argTypes.push_back(mTypes.top());
+                mTypes.pop();
+            }
+
+            std::reverse(argTypes.begin(), argTypes.end());
+            auto suitableFunc = mExecContext.functionStorage().findFunction(
+                funcName, argTypes
+            );
+
+            if (suitableFunc.has_value())
+            {
+                const auto& func = suitableFunc.value();
+
+                mTypes.push(func.returnType());
+                mProg.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                return;
+            }
+
+            // argTypes vector is reversed at this point, so we can just push its elements to mTypes
+            for (auto type : argTypes)
+            {
+                mTypes.push(type);
+            }
+
+            std::stringstream error;
+            error << "No suitable function found for ";
+            error << funcName;
+            error << '(';
+            for (size_t i = 0; i < argTypes.size(); i++)
+            {
+                error << mExecContext.typeStorage().getTypeInfo(argTypes[i]).value().name();
+                error << (i + 1 == argTypes.size() ? ')' : ',');
+            }
+
+            throw SyntaxError{ token.startPos(), error.str() };
+        }
+
+        void compileToTok(const std::vector<PostfixMember::Type>& types, bool popFound)
         {
             while (mStack.size() && std::find(types.begin(), types.end(), mStack.top().type()) == types.end())
             {
-                mProg.push_back(compileOperation(mStack.top()));
+                if (mStack.top().type() != PostfixMember::BINARYOP)
+                    throw std::runtime_error(__FUNCTION__ ": expected only binary operators.");
+
+                compileBinaryOp(mStack.top());
                 mStack.pop();
             }
 
             if (mStack.size() > 0 && popFound) mStack.pop();
         }
 
-        void compilePrefixOps()
+        void compilePrefixOps(size_t argCount)
         {
-            while (mStack.size() && mStack.top().isPrefixOp())
+            while (mStack.size() && (mStack.top().type() == PostfixMember::UNARYOP || mStack.top().type() == PostfixMember::FUNCCALL))
             {
-                mProg.push_back(compileOperation(mStack.top()));
+                PostfixMember::Type type = mStack.top().type();
+
+                if (type == PostfixMember::FUNCCALL)
+                {
+                    // function
+                    compileFunction(mStack.top(), argCount);
+                    argCount = 1;
+                }
+                else
+                {
+                    // unary
+                    if (argCount != 1)
+                        throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Too many arguments"};
+
+                    compileUnaryOp(mStack.top());
+                }
+
                 mStack.pop();
             }
+
+            if (argCount != 1)
+                throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Too many arguments" };
         }
 
     public:
-        CompilationContext(const std::vector<Token>& toks)
-        {
-            mTokens = toks;
-            mTokIndex = 0;
-            mPrev = mTok = Token(TokenType::NONE);
-        }
+        CompilationContext(const std::vector<Token>& toks, ExecutionContext& execCtx) :
+            mTokens(toks), mMemberIndex(0), mPrev({ PostfixMember::NONE, 0 }),
+            mCur({ PostfixMember::NONE, 0 }), mMembers(preprocess(toks)),
+            mExecContext(execCtx)
+        {}
 
-        TokenType curType() const { return mTok.type(); }
-        TokenType prevType() const { return mPrev.type(); }
+        PostfixMember::Type curType() const { return mCur.type(); }
+        PostfixMember::Type prevType() const { return mPrev.type(); }
 
         const Intr::Program& getProgram() const { return mProg; }
 
         void nextTok()
         {
-            mPrev = mTok;
-            mTok = mTokens[mTokIndex++];
+            mPrev = mCur;
+            mCur = mMembers[mMemberIndex++];
 
-            if (!validateToken(prevType(), curType()))
-                throw SyntaxError{ mTok.startPos(), "Unexpected token" };
+            if (!validateSeq(prevType(), curType()))
+                throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Unexpected token" }; // TODO: move this to preprocess
         }
 
-        bool isTok(TokenType type)
+        bool isMember(PostfixMember::Type type)
         {
             return curType() == type;
         }
 
-        bool isPrefixOp()
-        {
-            return isPrefixOperator(mTok) 
-                && (prevType() == TokenType::NONE 
-                    || prevType() == TokenType::LPAREN
-                    || prevType() == TokenType::COMMA
-                    || isBinaryOperator(mPrev));
-        }
-
-        bool isBinaryOp()
-        {
-            return isBinaryOperator(mTok);
-        }
-
         void openNewBlock()
         {
-            if (isTok(TokenType::LPAREN))
+            if (isMember(PostfixMember::LPAREN))
             {
-                mBlocks.push({ TokenType::LPAREN, 0 });
-                mStack.push(toMember(TokenType::LPAREN));
-            }
-            else if (isTok(TokenType::NONE))
+                mBlocks.push({ PostfixMember::LPAREN, 0 });
+                mStack.push(mCur);
+            } else if (isMember(PostfixMember::NONE))
             {
-                mBlocks.push({ TokenType::NONE, 0 });
+                mBlocks.push({ PostfixMember::NONE, 0 });
             }
         }
 
         void closeBlock()
         {
-            // check argument counts
-
-            if (isTok(TokenType::RPAREN))
+            if (isMember(PostfixMember::RPAREN))
             {
-                if (mBlocks.top().startTokenType != TokenType::LPAREN)
-                    throw SyntaxError{ mTok.startPos(), "Unexpected right parenthesis" };
+                if (mBlocks.top().startMemberType != PostfixMember::LPAREN)
+                    throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Unexpected right parenthesis" };
+
+                size_t argCount = mBlocks.top().commaCount + 1;
 
                 mBlocks.pop();
 
-                compileToTok({ TokenType::LPAREN, }, true);
-                compilePrefixOps();
-            }
-            else if (isTok(TokenType::ENDOFFILE))
+                compileToTok({ PostfixMember::LPAREN, }, true);
+                compilePrefixOps(argCount);
+            } else if (isMember(PostfixMember::END))
             {
-                if (mBlocks.size() != 1 || mBlocks.top().startTokenType != TokenType::NONE)
-                    throw SyntaxError{ mTok.startPos(), "Unclosed parenthesis" };
+                if (mBlocks.size() != 1 || mBlocks.top().startMemberType != PostfixMember::NONE)
+                    throw SyntaxError{ mTokens[mCur.tokenIndex()].startPos(), "Unclosed parenthesis" };
 
                 mBlocks.pop();
 
@@ -492,39 +495,49 @@ namespace Compiler {
         {
             CompilationBlock val = mBlocks.top();
 
-            compileToTok({ TokenType::LPAREN }, false);
+            compileToTok({ PostfixMember::LPAREN }, false);
             mBlocks.pop();
             val.commaCount++;
             mBlocks.push(val);
         }
 
-        void compilePrefixOp()
+        void addValue()
         {
-            mStack.push(toMember(mTok, true));
+            compileValue(mCur);
         }
 
-        void compileBinaryOp()
+        void addUnaryOp()
         {
-            PostfixMember member = toMember(mTok);
+            mStack.push(mCur);
+        }
 
-            if (member.associativity() == OpAssociativity::LEFTTORIGHT)
+        void addBinaryOp()
+        {
+            int precedence = getBinaryOperatorPrecedence(mTokens[mCur.tokenIndex()]);
+            OpAssociativity associativity = getBinaryOperatorAssociativity(mTokens[mCur.tokenIndex()]);
+
+            if (associativity == OpAssociativity::LEFTTORIGHT)
             {
-                while (mStack.size() && member.precedence() <= mStack.top().precedence())
+                while (mStack.size()
+                    && mStack.top().type() == PostfixMember::BINARYOP
+                    && precedence <= getBinaryOperatorPrecedence(mTokens[mStack.top().tokenIndex()]))
                 {
-                    mProg.push_back(compileOperation(mStack.top()));
+                    
+                    compileBinaryOp(mStack.top());
+                    mStack.pop();
+                }
+            } else
+            {
+                while (mStack.size()
+                    && mStack.top().type() == PostfixMember::BINARYOP
+                    && precedence < getBinaryOperatorPrecedence(mTokens[mStack.top().tokenIndex()]))
+                {
+                    compileBinaryOp(mStack.top());
                     mStack.pop();
                 }
             }
-            else
-            {
-                while (mStack.size() && member.precedence() < mStack.top().precedence())
-                {
-                    mProg.push_back(compileOperation(mStack.top()));
-                    mStack.pop();
-                }
-            }
 
-            mStack.push(member);
+            mStack.push(mCur);
         }
     };
 
@@ -534,44 +547,46 @@ namespace Compiler {
         if (tokens.size() == 0 || tokens.back().type() != TokenType::ENDOFFILE)
             throw std::invalid_argument(__FUNCTION__ ": invalid token sequence");
 
-        CompilationContext ctx(tokens);
-
         try
         {
+            CompilationContext ctx(tokens, mExecContext);
+
             ctx.openNewBlock();
 
             do
             {
                 ctx.nextTok();
 
-                if (ctx.isTok(TokenType::LPAREN))
+                if (ctx.isMember(PostfixMember::LPAREN))
                 {
                     ctx.openNewBlock();
-                }
-                else if (ctx.isTok(TokenType::COMMA))
+                } else if (ctx.isMember(PostfixMember::COMMA))
                 {
                     ctx.applyComma();
-                }
-                else if (ctx.isTok(TokenType::RPAREN) || ctx.isTok(TokenType::ENDOFFILE))
+                } else if (ctx.isMember(PostfixMember::RPAREN) || ctx.isMember(PostfixMember::END))
                 {
                     ctx.closeBlock();
-                }
-                else if (ctx.isPrefixOp())
+                } else if (ctx.isMember(PostfixMember::UNARYOP))
                 {
-                    ctx.compilePrefixOp();
-                }
-                else if (ctx.isBinaryOp())
+                    ctx.addUnaryOp();
+                } else if (ctx.isMember(PostfixMember::BINARYOP))
                 {
-                    ctx.compileBinaryOp();
+                    ctx.addBinaryOp();
+                } else if (ctx.isMember(PostfixMember::VALUE))
+                {
+                    ctx.addValue();
+                } else
+                {
+                    throw std::runtime_error(__FUNCTION__ ": unexpected postfix member.");
                 }
-            } while (!ctx.isTok(TokenType::ENDOFFILE));
+            } while (!ctx.isMember(PostfixMember::END));
+
+            return ctx.getProgram();
         }
         catch (SyntaxError e)
         {
             return e;
         }
-
-        return ctx.getProgram();
     }
 
 }

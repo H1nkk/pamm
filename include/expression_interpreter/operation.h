@@ -7,13 +7,10 @@
 namespace Intr {
     enum class Opcode
     {
-        ASSIGN,
-        ADD, SUBTRACT, MULT, POWER, UMINUS,
-        CALC, DERX, DERY, DERZ, DERW,
-        INTX, INTY, INTZ, INTW // TODO: fix
+        LOAD, STORE, CALL
     };
 
-    using Op = std::variant<Opcode, DataValue>;
+    using Op = std::pair<Opcode, unsigned long long>;
     using Program = std::vector<Op>;
 
     std::string toString(Opcode opcode);

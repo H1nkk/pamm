@@ -4,23 +4,33 @@
 #include "data_values.h"
 
 namespace Compiler {
+
     class PostfixMember
     {
     public:
-        explicit PostfixMember(Lexer::Token token = {}, int precedence = 0, bool prefixOp = false, OpAssociativity assoc = LEFTTORIGHT) :
-            mToken(token), mPrecedence(precedence), mPrefixOp(prefixOp), mAssociativity(assoc)
-        {}
+        enum Type
+        {
+            NONE,
+            END,
 
-        Lexer::Token token() const noexcept { return mToken; }
-        Lexer::TokenType type() const noexcept { return mToken.type(); }
-        int precedence() const noexcept { return mPrecedence; }
-        bool isPrefixOp() const noexcept { return mPrefixOp; }
-        OpAssociativity associativity() const noexcept { return mAssociativity; }
+            VALUE,
+            FUNCCALL,
+            LPAREN,
+            RPAREN,
+            COMMA,
+            BINARYOP,
+            UNARYOP,
+        };
 
     private:
-        Lexer::Token mToken;
-        int mPrecedence;
-        bool mPrefixOp;
-        OpAssociativity mAssociativity;
+        Type mType;
+        size_t mTokenIndex;
+
+    public:
+        PostfixMember(Type type = NONE, size_t tokenIndex = 0) :
+            mType(type), mTokenIndex(tokenIndex) {}
+
+        Type type() const { return mType; }
+        size_t tokenIndex() const { return mTokenIndex; }
     };
 }

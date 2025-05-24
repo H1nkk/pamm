@@ -40,7 +40,7 @@ public:
     }
 
     void add(const K& name, const V& pol) {
-        if (findPolynomial(name) != std::nullopt) // uniqueness check
+        if (find(name) != std::nullopt) // uniqueness check
         throw "There already is a polynomial with that name";
         int i = mTable.size() / 2;
         int leftBorder = 0;
@@ -66,7 +66,7 @@ public:
     }
 
     void del(const K& name) {
-        if (findPolynomial(name) == std::nullopt) return; // uniqueness check
+        if (find(name) == std::nullopt) return; // uniqueness check
         int i = mTable.size() / 2;
         int leftBorder = 0;
         int rightBorder = mTable.size() - 1;

@@ -1,12 +1,21 @@
 #pragma once
 #include <string>
-#include "table.h"
-#include "data_values.h"
+#include "type_storage.h"
+#include "variables_storage.h"
+#include "function_storage.h"
 #include "execution_node.h"
 
-struct ExecutionContext {
-    Table<std::string, DataValue> constsTable;
-    Table<std::string, DataValue> variablesTable;
+class ExecutionContext final {
+private:
+    TypeStorage mTypeStorage;
+    VariablesStorage mVariableStorage;
+    FunctionStorage mFunctionStorage;
 
-    BlockNode* root;
+    BlockNode* mRoot;
+public:
+    ExecutionContext() : mVariableStorage(mTypeStorage), mFunctionStorage(mTypeStorage) {}
+
+    TypeStorage& typeStorage() { return mTypeStorage; }
+    VariablesStorage& variableStorage() { return mVariableStorage; }
+    FunctionStorage& functionStorage() { return mFunctionStorage; }
 };
