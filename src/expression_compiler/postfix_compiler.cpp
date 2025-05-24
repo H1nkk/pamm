@@ -127,8 +127,6 @@ namespace Compiler {
     bool isUnaryOperator(const Token& token)
     {
         return unaryOperatorMappings.contains(token.type());
-
-        return false;
     }
 
     bool isFunction(const Token& token, const FunctionStorage& funcStorage)
@@ -213,7 +211,6 @@ namespace Compiler {
 
         void compileValue(const PostfixMember& member)
         {
-            // resolve name or literal to id and add instr, add datatype to stack
             Token token = mTokens[member.tokenIndex()];
 
             if (token.type() == TokenType::ID)
