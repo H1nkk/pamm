@@ -1,472 +1,392 @@
 #include <iostream>
+#include <string>
+#include <algorithm>
+#include <sstream>
+#include <format>
 #include <qapplication>
 #include <qpushbutton>
 #include <QElapsedTimer>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QFont>
+#include <QMessageBox>
+#include <QFileDialog>
 #include <QTimer>
 #include <QItemDelegate>
-#include <string>
-#include <algorithm>
-#include <sstream>
-#include <format>
+#include <QPlainTextEdit>
+#include <QScrollBar>
+#include <QSyntaxHighlighter>
+#include <QTextCharFormat>
+#include <QRegularExpression>
+#include <QTextDocument>
+#include <QTextEdit>
+#include <QMetaType>
 #include "ui_main_window.h"
-#include "ui_info_widget.h"
 #include "table.h"
+
 
 using namespace std;
 
-class TableEditor;
+bool firstTime = true;
+Ui::MainWindow ui;
+void consoleEnterHandler(Ui::MainWindow*);
 
-int globalRowWidth = 30;
-int globalCharacterWidth = 7;
-TableEditor* pInputTable;
-int pos = 0;
-
-class TableEditor : public QTableWidget 
+class ConsoleTextEdit : public QTextEdit 
 {
-    friend class CustomDelegate;
+    Q_OBJECT
 
 public:
-    TableEditor(QTableWidget* parent) : QTableWidget(parent) {
-        //globalCharacterWidth = QFontMetrics(font()).averageCharWidth();
+    using QTextEdit::QTextEdit;
+protected:
+    void keyPressEvent(QKeyEvent* event) override
+    {
+        if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
+        {
+            consoleEnterHandler(&ui);
+
+            qDebug() << "enter pressed in console";
+            QTextEdit::keyPressEvent(event);
+            return;
+        }
+        QTextEdit::keyPressEvent(event);
     }
-    int cursorColumn = 0;
+};
+
+class MyHighlighter : public QSyntaxHighlighter 
+{
+public:
+    MyHighlighter(QTextDocument* parent = nullptr) : QSyntaxHighlighter(parent) 
+    {
+        vector<QString> keywords;
+
+        map<QString, QColor> color;
+
+        // numbers highlighting
+        QTextCharFormat numbersFormat;
+        numbersFormat.setForeground(QColor(184, 215, 161));
+
+        HighlightingRule numbersRule;
+        numbersRule.pattern = QRegularExpression(R"(\b\d+(\.\d+)?\b)"); // numbers
+        numbersRule.format = numbersFormat;
+        highlightingRules.append(numbersRule);
+
+        keywords.push_back("if"); color["if"] = QColor(215, 177, 238);
+        keywords.push_back("then"); color["then"] = QColor(215, 177, 238);
+        keywords.push_back("else"); color["else"] = QColor(215, 177, 238);
+
+        keywords.push_back("double"); color["double"] = QColor(84, 135, 166);
+        keywords.push_back("integer"); color["integer"] = QColor(84, 135, 166);
+
+        keywords.push_back("program"); color["program"] = QColor(202, 39, 57);
+
+        keywords.push_back("begin"); color["begin"] = QColor(171, 91, 219);
+        keywords.push_back("end"); color["end"] = QColor(171, 91, 219);
+        keywords.push_back("var"); color["var"] = QColor(171, 91, 219);
+        keywords.push_back("const"); color["const"] = QColor(171, 91, 219);
+
+        keywords.push_back("Write"); color["Write"] = QColor(221, 221, 170);
+        keywords.push_back("WriteLn"); color["WriteLn"] = QColor(221, 221, 170);
+        keywords.push_back("Read"); color["Read"] = QColor(221, 221, 170);
+
+        keywords.push_back("and"); color["and"] = QColor(37, 99, 187);
+        keywords.push_back("or"); color["or"] = QColor(37, 99, 187);
+        keywords.push_back("not"); color["not"] = QColor(37, 99, 187);
+
+        keywords.push_back("mod"); color["mod"] = QColor(254, 122, 116);
+        keywords.push_back("div"); color["div"] = QColor(254, 122, 116);
+        
+        // keywords highlighting
+        for (auto keyword : keywords) 
+        {
+            QTextCharFormat format;
+            format.setForeground(color[keyword]);
+
+            HighlightingRule rule;
+            rule.pattern = QRegularExpression("\\b" + keyword + "\\b");
+            rule.format = format;
+            highlightingRules.append(rule);
+        }
+
+        // quotes highlighting
+        QTextCharFormat singleQuoteFormat;
+        singleQuoteFormat.setForeground(QColor(214, 157, 127));
+
+        HighlightingRule quotesRule;
+        quotesRule.pattern = QRegularExpression(R"('([^'\\]|\\.)*')"); // одинарные кавычки и всё между ними
+        quotesRule.format = singleQuoteFormat;
+        highlightingRules.append(quotesRule);
+    }
 
 protected:
-    void keyPressEvent(QKeyEvent* event) override 
+    void highlightBlock(const QString& text) override 
     {
-        qDebug() << "smt is pressed";
-        if (event->key() == Qt::Key_Return || event->key() == Qt::Key_Enter) 
+        for (const HighlightingRule& rule : qAsConst(highlightingRules)) 
         {
-            int newRow = currentRow() + 1;
-
-            insertRow(newRow);
-
-            setCurrentCell(newRow, 0);
-
-            QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth , newRow * globalRowWidth });
-
-            edit(index);
-
-            return;
-        }
-        else if (event->key() == Qt::Key_Backspace) { // TODO Добавить key_delete
-            
-            int curRow = currentRow();
-            QTableWidgetItem* curItem = currentItem();
-
-            qDebug() << "text: " << curItem->text();
-
-            if (curItem->text() == "") {
-                if (currentRow() == 0) return;
-
-                int newRow = max(0, currentRow() - 1);
-
-                removeRow(currentRow());
-
-                setCurrentCell(newRow, 0);
-                QTableWidgetItem* pItem = currentItem();
-                cursorColumn = pItem->text().length();
-
-                QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
-
-                edit(index);
-
-                QWidget* editor = indexWidget(index);
-                if (!editor) return;
-
-                QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, newRow * globalRowWidth } - visualRect(index).topLeft();
-
-                if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
-                {
-                    lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-                }
-                else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-                {
-                    QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-                    textEdit->setTextCursor(cursor);
-                }
-
-
-
-                return;
-            }
-            else {
-                QTableWidget::keyPressEvent(event);
-            }
-
-            return;
-        }
-        else if (event->key() == Qt::Key_Escape) { // TODO пока не работает, доделать. хотя мб это вообще не надо. надо подумать
-            editItem(item(currentRow(), 0));
-
-            return;
-        }
-        else if (event->key() == Qt::Key_Up)
-        {
-            int newRow = max(0, currentRow() - 1);
-
-            if (currentRow() == newRow) { // when newrow == 0 and currow == 0
-                cursorColumn = 0;
-            }
-
-            setCurrentCell(newRow, 0);
-
-            QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
-
-            edit(index);
-
-            QWidget* editor = indexWidget(index);
-            if (!editor) return;
-
-            QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, newRow * globalRowWidth } - visualRect(index).topLeft();
-
-            if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
+            QRegularExpressionMatchIterator matchIterator = rule.pattern.globalMatch(text);
+            while (matchIterator.hasNext()) 
             {
-                lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
+                QRegularExpressionMatch match = matchIterator.next();
+                setFormat(match.capturedStart(), match.capturedLength(), rule.format);
             }
-            else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-            {
-                QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-                textEdit->setTextCursor(cursor);
-            }
-
-            return;
-        }
-        else if (event->key() == Qt::Key_Down) 
-        {
-            int newRow = min(rowCount() - 1, currentRow() + 1);
-
-            if (currentRow() == newRow) { // when newrow == rowCount() - 1 and currow == rowCount() - 1
-
-                cursorColumn = currentItem()->text().length(); // TODO Изменить на конец строки, а не 1000
-            }
-
-            setCurrentCell(newRow, 0);
-
-            QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
-
-            edit(index);
-
-            QWidget* editor = indexWidget(index);
-            if (!editor) return;
-
-            QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, newRow * globalRowWidth } - visualRect(index).topLeft();
-
-            if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
-            {
-                lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-            }
-            else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-            {
-                QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-                textEdit->setTextCursor(cursor);
-            }
-            return;
-        }
-        else if (event->key() == Qt::Key_Left)
-        {
-            qDebug() << "left pressed";
-
-            if (cursorColumn > 0) {
-                cursorColumn = min(cursorColumn, (int)(currentItem()->text().length()));
-                cursorColumn--;
-
-                setCurrentCell(currentRow(), 0);
-
-                QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, currentRow() * globalRowWidth });
-
-                edit(index);
-
-                QWidget* editor = indexWidget(index);
-                if (!editor) return;
-
-                QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, currentRow() * globalRowWidth } - visualRect(index).topLeft();
-
-                if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
-                {
-                    lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-                }
-                else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-                {
-                    QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-                    textEdit->setTextCursor(cursor);
-                }
-                return;
-            }
-            else
-            {
-                bool change = true;
-                if (currentRow() == 0) change = false;
-
-                int newRow = max(0, currentRow() - 1);
-
-                setCurrentCell(newRow, 0);
-                QTableWidgetItem* pItem = currentItem();
-                if (change)
-                    cursorColumn = pItem->text().length();
-
-                QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
-
-                edit(index);
-
-                QWidget* editor = indexWidget(index);
-                if (!editor) return;
-
-                QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, newRow * globalRowWidth } - visualRect(index).topLeft();
-
-                if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
-                {
-                    lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-                }
-                else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-                {
-                    QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-                    textEdit->setTextCursor(cursor);
-                }
-
-                return;
-            }
-        }
-        else if (event->key() == Qt::Key_Right)
-        {
-            qDebug() << "right pressed";
-
-            QTableWidgetItem* pItem = currentItem();
-            int len = pItem->text().length();
-            qDebug() << len;
-            if (cursorColumn < len) {
-                cursorColumn++;
-
-                setCurrentCell(currentRow(), 0);
-
-                QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, currentRow() * globalRowWidth });
-
-                edit(index);
-
-                QWidget* editor = indexWidget(index);
-                if (!editor) return;
-
-                QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, currentRow() * globalRowWidth } - visualRect(index).topLeft();
-
-                if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
-                {
-                    lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-                }
-                else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-                {
-                    QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-                    textEdit->setTextCursor(cursor);
-                }
-                return;
-            }
-            else {
-                bool change = true;
-                if (currentRow() == rowCount() - 1) change = false;
-
-                if (change)
-                    cursorColumn = 0;
-
-                int newRow = min(currentRow() + 1, rowCount() - 1);
-                setCurrentCell(newRow, 0);
-
-                QModelIndex index = indexAt({ cursorColumn * globalCharacterWidth, newRow * globalRowWidth });
-
-                edit(index);
-
-                QWidget* editor = indexWidget(index);
-                if (!editor) return;
-
-                QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, newRow * globalRowWidth } - visualRect(index).topLeft();
-
-                if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
-                {
-                    lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-                }
-                else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-                {
-                    QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-                    textEdit->setTextCursor(cursor);
-                }
-                return;
-
-            }
-        }
-        else 
-        {
-            QTableWidget::keyPressEvent(event);
         }
     }
 
-    void mousePressEvent(QMouseEvent* event) override 
+private:
+    struct HighlightingRule 
     {
-        QTableWidget::mousePressEvent(event);
+        QRegularExpression pattern;
+        QTextCharFormat format;
+    };
 
-        QModelIndex index = indexAt(event->pos());
-        if (!index.isValid()) return;
-
-        edit(index);
-
-        QWidget* editor = indexWidget(index);
-        if (!editor) return;
-
-        QPoint posInEditor = event->pos() - visualRect(index).topLeft();
-
-        if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor)) 
-        {
-            lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-            cursorColumn = lineEdit->cursorPosition();
-            qDebug() << "lineEdit index: " << cursorColumn;
-
-        }
-        else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-        {
-            QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-            textEdit->setTextCursor(cursor);
-            cursorColumn = textEdit->textCursor().position();
-            qDebug() << "textEdit index: " << cursorColumn;
-
-        }
-
-        qDebug() << "index: " << event->pos().x() - visualRect(index).topLeft().x() << " " << event->pos().y();
-
-    }
-
-public:
-
-    void update() {
-        QTableWidgetItem* curItem = currentItem();
-        if (!curItem) {
-            qDebug() << "bug";
-            return;
-        }
-        QString text = currentItem()->text();
-        qDebug() << "LUFE";
-
-        closePersistentEditor(currentItem());
-        editItem(curItem);
-        curItem->setText(text);
-        /*QModelIndex index = currentIndex();
-        if (!index.isValid()) return;
-
-        QString text = currentItem()->text();
-        int cursorPos = 0;
-        if (QLineEdit* editor = qobject_cast<QLineEdit*>(indexWidget(index))) {
-            cursorPos = editor->cursorPosition();
-        }
-
-        closePersistentEditor(currentItem());
-        edit(index);
-        
-        QWidget* editor = indexWidget(index);
-
-        QPoint posInEditor = QPoint{ cursorColumn * globalCharacterWidth, currentRow() * globalRowWidth } - visualRect(index).topLeft();
-
-        if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor))
-        {
-            lineEdit->setCursorPosition(lineEdit->cursorPositionAt(posInEditor));
-        }
-        else if (QTextEdit* textEdit = qobject_cast<QTextEdit*>(editor))
-        {
-            QTextCursor cursor = textEdit->cursorForPosition(posInEditor);
-            textEdit->setTextCursor(cursor);
-        }
-        return;*/
-    }
+    QVector<HighlightingRule> highlightingRules;
 };
 
-class CustomDelegate : public QItemDelegate {
-public:
-    using QItemDelegate::QItemDelegate;
+void highlightCurrentLine(Ui::MainWindow* ui) 
+{
+    QPlainTextEdit* editor = ui->textEdit;
+    QList<QTextEdit::ExtraSelection> extraSelections;
 
-    QWidget* createEditor(QWidget* parent, const QStyleOptionViewItem& option, const QModelIndex& index) const override {
-        QWidget* editor = QItemDelegate::createEditor(parent, option, index);
+    if (!editor->isReadOnly()) 
+    {
+        QTextEdit::ExtraSelection selection;
 
-        editor->setFont(QFont("Cascadia Mono"));
+        QColor lineColor = QColor(55,55,55);
 
-        if (QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor)) {
-            lineEdit->installEventFilter(const_cast<CustomDelegate*>(this));
+        QTextCharFormat format;
+        format.setBackground(lineColor);
+
+        selection.format = format;
+        selection.format.setProperty(QTextFormat::FullWidthSelection, true);
+        if (!editor->textCursor().isNull()) 
+        {
+            selection.cursor = editor->textCursor();
+            selection.cursor.clearSelection();
+            extraSelections.append(selection);
         }
-        return editor;
     }
 
-    bool eventFilter(QObject* editor, QEvent* event) override {
-        if (event->type() == QEvent::KeyPress) {
-            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+    ui->textEdit->setExtraSelections(extraSelections);
+}
 
-            if (keyEvent->key() == Qt::Key_Left || keyEvent->key() == Qt::Key_Right ) {
-                //QLineEdit* lineEdit = qobject_cast<QLineEdit*>(editor);
-                //if (!lineEdit) return false;
+void consoleEnterHandler(Ui::MainWindow* ui) // TODO
+{
 
-                //QString currentText = lineEdit->text();
-                //int cursorPos = lineEdit->cursorPosition();
+}
 
-                //// Закрываем редактор
-                //closeEditor(lineEdit, QAbstractItemDelegate::NoHint);
+void run(Ui::MainWindow* ui) // TODO
+{
 
-                //// Обновляем значение ячейки (иначе будет потеря текста)
-                //QTableWidgetItem* item = pInputTable->currentItem();
-                //if (item) item->setText(currentText);
+}
 
-                //// Открываем редактор заново
-                //QModelIndex index = pInputTable->currentIndex();
-                //pInputTable->edit(index);
+void changeRowScrollBar(Ui::MainWindow* ui) 
+{
+    ui->rowNumbersContainer->verticalScrollBar()->setValue(ui->textEdit->verticalScrollBar()->value());
+}
 
-                //QWidget* newEditor = pInputTable->indexWidget(index);
-                //if (QLineEdit* newLineEdit = qobject_cast<QLineEdit*>(newEditor)) {
-                //    newLineEdit->setCursorPosition(cursorPos > 0 ? cursorPos - 1 : 0);  // left или right можно скорректировать
-                //}
+void changeMainTextScrollBar(Ui::MainWindow* ui) 
+{
+    ui->textEdit->verticalScrollBar()->setValue(ui->rowNumbersContainer->verticalScrollBar()->value());
+}
 
-                //return true;
-
-
-                //pInputTable->update();
-
-
-                commitData(qobject_cast<QWidget*>(editor));
-                closeEditor(qobject_cast<QWidget*>(editor), QAbstractItemDelegate::NoHint);
-
-                qDebug() << "Left or right key pressed in editor!";
-
-                pInputTable->keyPressEvent(keyEvent);
-                return true;
-            }
-            if (keyEvent->key() == Qt::Key_Backspace) {
-                qDebug() << "backspace key pressed in editor!";
-                pInputTable->keyPressEvent(keyEvent);
-            }
-        }
-        return QItemDelegate::eventFilter(editor, event);
+void refreshRowNumbers(Ui::MainWindow* ui) 
+{
+    int rows = ui->textEdit->toPlainText().count("\n") + 1;
+    QString result;
+    for (int i = 1; i <= rows; i++) 
+    {
+        result += to_string(i);
+        if (i != rows)
+            result += '\n';
     }
-};
+    ui->rowNumbersContainer->setPlainText(result);
+}
+
+bool saveExisting(Ui::MainWindow* ui, const QString& curFilename) 
+{
+    QFile file(curFilename);
+
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate)) 
+    {
+        qDebug() << "Something went wrong during file saving";
+        return false;
+    }
+
+    QString text = ui->textEdit->toPlainText();
+
+    QTextStream out(&file);
+
+    out << text;
+
+    return true;
+}
+
+bool saveNew(Ui::MainWindow* ui, QString& curFilename) 
+{
+    QString filename = QFileDialog::getSaveFileName(nullptr, "Choose file to save", "Unnamed.txt", "Text files (*.txt)");
+
+    if (filename.isEmpty()) 
+    {
+        qDebug() << "No file was chosen";
+        return false;
+    }
+
+    QFile file(filename);
+
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate)) 
+    {
+        qDebug() << "Something went wrong during file saving";
+        return false;
+    }
+
+    QString text = ui->textEdit->toPlainText();
+
+    QTextStream out(&file);
+
+    out << text;
+
+    curFilename = filename;
+    ui->fileNameContainer->setText(curFilename);
+
+    return true;
+}
+
+bool onOpenButtonClicked(Ui::MainWindow* ui, QString& curFilename) 
+{
+    QString fileContent;
+
+    QString filename = QFileDialog::getOpenFileName(nullptr, "Choose file to open", QString(), "Text files (*.txt)");
+
+    if (filename.isEmpty()) 
+    {
+        qDebug() << "No file was chosen";
+        return false;
+    }
+
+    QFile file(filename);
+
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text))
+        return false;
+
+    QTextStream in(&file);
+
+    fileContent = in.readAll();
+
+    file.close();
+
+    ui->textEdit->clear();
+    ui->textEdit->setPlainText(fileContent);
+
+    curFilename = filename;
+    ui->fileNameContainer->setText(curFilename);
+    return true;
+}
+
+bool onSaveButtonClicked(Ui::MainWindow* ui, QString& curFilename) 
+{
+
+    if (firstTime)
+        return saveNew(ui, curFilename);
+    else
+        return saveExisting(ui, curFilename);
+}
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
     QMainWindow window;
-
-    Ui::MainWindow ui;
     ui.setupUi(&window);
 
-    pInputTable = new TableEditor(ui.tableWidget);
-    ui.verticalLayout->replaceWidget(ui.tableWidget, pInputTable);
-    delete ui.tableWidget;
-    ui.tableWidget = pInputTable;
-    ui.tableWidget->setItemDelegate(new CustomDelegate(ui.tableWidget));
+    // change console container to custom one
+    QWidget* oldConsole = ui.consoleContainer;
+    QWidget* parent = oldConsole->parentWidget();
+    oldConsole->hide();
+    oldConsole->deleteLater();
+    ConsoleTextEdit* customConsole = new ConsoleTextEdit(parent);
+    customConsole->setObjectName("consoleContainer");
+    QLayout* layout = parent->layout();
+    if (layout)
+    {
+        layout->addWidget(customConsole);
+    }
+    ui.consoleContainer = customConsole;
+    // end of changing console container to custom one
 
-    pInputTable->setColumnCount(1);
-    pInputTable->setRowCount(1);
-    pInputTable->setColumnWidth(0, 10000);
-    pInputTable->setCursor(Qt::IBeamCursor);
-    pInputTable->setFont(QFont("Cascadia Mono")); // TODO с этой строкой иногда лагает :) Хотя лаги не из-за нее, а изза "QAbstractItemView::commitData called with an editor that does not belong to this view"
-    pInputTable->horizontalHeader()->hide();
-    pInputTable->setShowGrid(false);
-    pInputTable->setContentsMargins(0, 0, 0, 0);
+    QString currentFilename;
+    QPlainTextEdit* editor = ui.textEdit;
+    new MyHighlighter(editor->document());
 
+    QObject::connect(ui.actionOpen, &QAction::triggered, [&]() 
+        {
+        if (onOpenButtonClicked(&ui, currentFilename)) 
+        {
+            qDebug() << currentFilename << "has been opened";
 
+            firstTime = false;
+        }
+
+        refreshRowNumbers(&ui);
+        });
+
+    QObject::connect(ui.actionSave, &QAction::triggered, [&]() 
+        {
+        if (onSaveButtonClicked(&ui, currentFilename)) 
+        {
+            qDebug() << currentFilename << "has been saved";
+
+            firstTime = false;
+        }
+
+        refreshRowNumbers(&ui);
+        });
+
+    QObject::connect(ui.actionSave_as, &QAction::triggered, [&]() 
+        {
+        if (saveNew(&ui, currentFilename)) 
+        {
+            qDebug() << currentFilename << "has been saved";
+
+            firstTime = false;
+        }
+
+        refreshRowNumbers(&ui);
+        });
+
+    QObject::connect(ui.runButton, &QPushButton::clicked, [&]() 
+        {
+        run(&ui);
+        });
+
+    QObject::connect(ui.fileNameContainer, &QLineEdit::textChanged, [&]() 
+        {
+        ui.fileNameContainer->setToolTip(ui.fileNameContainer->text());
+        });
+
+    QObject::connect(ui.textEdit, &QPlainTextEdit::textChanged, [&]() 
+        {
+        refreshRowNumbers(&ui);
+        });
+
+    QObject::connect(ui.textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [&]() 
+        {
+        changeRowScrollBar(&ui);
+        });
+
+    QObject::connect(ui.rowNumbersContainer->verticalScrollBar(), &QScrollBar::valueChanged, [&]() 
+        {
+        changeMainTextScrollBar(&ui);
+        });
+
+    //QObject::connect(ui.textEdit, &QPlainTextEdit::cursorPositionChanged, [&]() { // CRASHES
+    //    highlightCurrentLine(&ui);
+    //    });
+
+    ui.actionSave->setShortcut(QKeySequence("Ctrl+S"));
+    ui.actionOpen->setShortcut(QKeySequence("Ctrl+O"));
+    ui.actionSave_as->setShortcut(QKeySequence("Ctrl+Shift+S"));
+    
     window.show();
     return app.exec();
 }
+
+#include "main.moc"
