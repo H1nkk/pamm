@@ -1,147 +1,12 @@
 //#include <gtest/gtest.h>
 //#include "expression_compiler/postfix_compiler.h"
 
-//TEST(PostfixCompilerTest, can_compile_single_number)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_single_variable)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_sum)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_unary_minus)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixText, can_compile_multiplication)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixText, can_compile_subtraction)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixText, can_compile_float_division)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_remainder)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_integer_division)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_less) 
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_greater)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_equal)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_not_equal)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_lessequal)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_greater_equal) {
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_and) {
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_or)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_compile_not) {
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_handle_operator_precedence)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, can_perform_type_checking)
-//{
-//    ADD_FAILURE();
-//}
-//
+
 //TEST(PostfixCompilerTest, can_compile_auto_typecasting) 
 //{
 //    ADD_FAILURE();
 //}
 //
-//TEST(PostfixCompilerTest, can_perform_complex_calculation)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, exception_on_unclosed_parenthesis)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, exception_on_too_many_parentheses)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, exception_on_empty_parentheses)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, exception_on_two_operators_in_a_row)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, exception_on_binary_operator_without_left_argument)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, exception_on_binary_operator_without_right_argument)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixCompilerTest, exception_on_unknown_var_const_name_used)
-//{
-//    ADD_FAILURE();
-//}
 
 
 #include <gtest/gtest.h>
@@ -161,26 +26,22 @@ class PostfixCompilerTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        // Регистрация базовых типов
         execContext.typeStorage().registerType(DataType("integer", sizeof(long long)));
         execContext.typeStorage().registerType(DataType("double", sizeof(double)));
         execContext.typeStorage().registerType(DataType("boolean", sizeof(bool)));
 
-        // Арифметические операторы
         registerOperator("$operator+", { "integer", "integer" }, "integer", 1);
         registerOperator("$operator-", { "integer", "integer" }, "integer", 2);
         registerOperator("$operator*", { "integer", "integer" }, "integer", 3);
         registerOperator("$operator/", { "integer", "integer" }, "integer", 4);
-        registerOperator("$operator-", { "integer" }, "integer", 5); // унарный минус
         registerOperator("$operatormod", { "integer", "integer" }, "integer", 26);
         registerOperator("$operatordiv", { "integer", "integer" }, "integer", 27);
+        registerOperator("$operator-", { "integer" }, "integer", 5);
 
-        // Логические операторы
         registerOperator("$operatorand", { "boolean", "boolean" }, "boolean", 10);
         registerOperator("$operatoror", { "boolean", "boolean" }, "boolean", 11);
-        registerOperator("$operatornot", { "boolean" }, "boolean", 12); // унарный NOT
+        registerOperator("$operatornot", { "boolean" }, "boolean", 12);
 
-        // Операторы сравнения
         registerOperator("$operator=", { "integer", "integer" }, "boolean", 20);
         registerOperator("$operator<>", { "integer", "integer" }, "boolean", 21);
         registerOperator("$operator<", { "integer", "integer" }, "boolean", 22);
@@ -208,7 +69,7 @@ protected:
     ExecutionContext execContext;
 };
 
-TEST_F(PostfixCompilerTest, CompilesSimpleIntegerExpression)
+TEST_F(PostfixCompilerTest, can_compile_single_integer)
 {
     PostfixCompiler compiler(execContext);
 
@@ -225,7 +86,24 @@ TEST_F(PostfixCompilerTest, CompilesSimpleIntegerExpression)
     EXPECT_EQ(program[0].first, Opcode::LOAD);
 }
 
-TEST_F(PostfixCompilerTest, CompilesSimpleBinaryOperation)
+TEST_F(PostfixCompilerTest, can_compile_single_double)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "42.0", 0, 2},
+        {TokenType::ENDOFFILE, "", 2, 2}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 1);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_addition)
 {
     PostfixCompiler compiler(execContext);
 
@@ -246,7 +124,348 @@ TEST_F(PostfixCompilerTest, CompilesSimpleBinaryOperation)
     EXPECT_EQ(program[2].first, Opcode::CALL);
 }
 
-TEST_F(PostfixCompilerTest, HandlesOperatorPrecedence)
+TEST_F(PostfixCompilerTest, can_compile_subtraction)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::MINUS, "-", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_multiplication)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::MULT, "*", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_division)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::DIV, "/", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_int_division)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::DIVINT, "div", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_modulo)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::MOD, "mod", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_unary_minus)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::MINUS, "-", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 2);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_equal)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::EQUAL, "=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_not_equal)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::NOTEQUAL, "<>", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_less)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::LESS, "<", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_greater)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::GREATER, ">", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_lessequal)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::LESSEQUAL, "<=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_greater_equal)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::GREATEREQUAL, ">=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 3);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_and)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::LPAREN, "(", 0, 1},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::EQUAL, "=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::RPAREN, ")", 4, 5},
+        {TokenType::AND, "and", 2, 3},
+        {TokenType::LPAREN, "(", 0, 1},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::EQUAL, "=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::RPAREN, ")", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 7);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+    EXPECT_EQ(program[3].first, Opcode::LOAD);
+    EXPECT_EQ(program[4].first, Opcode::LOAD);
+    EXPECT_EQ(program[5].first, Opcode::CALL);
+    EXPECT_EQ(program[6].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_or)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::LPAREN, "(", 0, 1},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::EQUAL, "=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::RPAREN, ")", 4, 5},
+        {TokenType::OR, "or", 2, 3},
+        {TokenType::LPAREN, "(", 0, 1},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::EQUAL, "=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::RPAREN, ")", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 7);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+    EXPECT_EQ(program[3].first, Opcode::LOAD);
+    EXPECT_EQ(program[4].first, Opcode::LOAD);
+    EXPECT_EQ(program[5].first, Opcode::CALL);
+    EXPECT_EQ(program[6].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_compile_not)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::NOT, "not", 0, 1},
+        {TokenType::LPAREN, "(", 0, 1},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::EQUAL, "=", 2, 3},
+        {TokenType::INT, "3", 4, 5},
+        {TokenType::RPAREN, ")", 4, 5},
+        {TokenType::ENDOFFILE, "", 6, 6}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 4);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+    EXPECT_EQ(program[3].first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_handle_operator_precedence)
 {
     PostfixCompiler compiler(execContext);
 
@@ -264,12 +483,13 @@ TEST_F(PostfixCompilerTest, HandlesOperatorPrecedence)
 
     auto program = std::get<Program>(result);
     ASSERT_EQ(program.size(), 5);
-    // Проверяем что умножение выполняется перед сложением
-    EXPECT_EQ(program[3].first, Opcode::CALL); // умножение
-    EXPECT_EQ(program[4].first, Opcode::CALL); // сложение
+    EXPECT_EQ(program[3].first, Opcode::CALL);
+    EXPECT_EQ(program[3].second, 3);
+    EXPECT_EQ(program[4].first, Opcode::CALL);
+    EXPECT_EQ(program[4].second, 1);
 }
 
-TEST_F(PostfixCompilerTest, HandlesParentheses)
+TEST_F(PostfixCompilerTest, can_handle_parentheses)
 {
     PostfixCompiler compiler(execContext);
 
@@ -301,51 +521,7 @@ TEST_F(PostfixCompilerTest, HandlesParentheses)
     EXPECT_EQ(program[4].second, 3);
 }
 
-TEST_F(PostfixCompilerTest, HandlesUnaryOperators)
-{
-    PostfixCompiler compiler(execContext);
-
-    std::vector<Token> tokens = {
-        {TokenType::MINUS, "-", 0, 1},
-        {TokenType::INT, "42", 2, 4},
-        {TokenType::ENDOFFILE, "", 5, 5}
-    };
-
-    auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
-
-    auto program = std::get<Program>(result);
-    ASSERT_EQ(program.size(), 2);
-    EXPECT_EQ(program[0].first, Opcode::LOAD);
-    EXPECT_EQ(program[1].first, Opcode::CALL); // унарный минус
-}
-
-TEST_F(PostfixCompilerTest, ReturnsSyntaxErrorForInvalidExpressions)
-{
-    PostfixCompiler compiler(execContext);
-
-    // Неправильное выражение: два числа подряд
-    std::vector<Token> tokens1 = {
-        {TokenType::INT, "2", 0, 1},
-        {TokenType::INT, "3", 2, 3},
-        {TokenType::ENDOFFILE, "", 4, 4}
-    };
-
-    auto result1 = compiler.compileExpression(tokens1);
-    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result1));
-
-    // Неправильное выражение: незакрытая скобка
-    std::vector<Token> tokens2 = {
-        {TokenType::LPAREN, "(", 0, 1},
-        {TokenType::INT, "2", 2, 3},
-        {TokenType::ENDOFFILE, "", 4, 4}
-    };
-
-    auto result2 = compiler.compileExpression(tokens2);
-    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
-}
-
-TEST_F(PostfixCompilerTest, HandlesVariableReferences)
+TEST_F(PostfixCompilerTest, can_compile_single_variable)
 {
     VariableInfo varInfo("x", execContext.typeStorage().getTypeId("integer").value(), false);
     execContext.variableStorage().registerVariable<long long>(varInfo, 10);
@@ -366,7 +542,7 @@ TEST_F(PostfixCompilerTest, HandlesVariableReferences)
     EXPECT_EQ(program[0].second, 0);
 }
 
-TEST_F(PostfixCompilerTest, HandlesFunctionCalls)
+TEST_F(PostfixCompilerTest, can_handle_function_calls)
 {
     std::vector<DataTypeId> argTypes = {
         execContext.typeStorage().getTypeId("integer").value(),
@@ -401,9 +577,8 @@ TEST_F(PostfixCompilerTest, HandlesFunctionCalls)
     EXPECT_EQ(program[2].second, 10);
 }
 
-TEST_F(PostfixCompilerTest, HandlesMixedTypes)
+TEST_F(PostfixCompilerTest, can_handle_mixed_type_operators)
 {
-    // Регистрируем оператор для смешанных типов
     registerOperator("$operator+", { "integer", "double" }, "double", 6);
 
     PostfixCompiler compiler(execContext);
@@ -423,8 +598,7 @@ TEST_F(PostfixCompilerTest, HandlesMixedTypes)
     EXPECT_EQ(program.back().first, Opcode::CALL);
 }
 
-// Тесты для сложных выражений
-TEST_F(PostfixCompilerTest, CompilesComplexArithmeticExpression)
+TEST_F(PostfixCompilerTest, can_compile_complex_arithmetic_expressions)
 {
     PostfixCompiler compiler(execContext);
 
@@ -446,16 +620,13 @@ TEST_F(PostfixCompilerTest, CompilesComplexArithmeticExpression)
 
     auto program = std::get<Program>(result);
     ASSERT_EQ(program.size(), 7);
-    // Ожидаемый порядок: 3,4,* (умножение), 2,+ (сложение), 5,- (вычитание)
-    EXPECT_EQ(program[3].first, Opcode::CALL); // умножение
-    EXPECT_EQ(program[4].first, Opcode::CALL); // сложение
-    EXPECT_EQ(program[6].first, Opcode::CALL); // вычитание
+    EXPECT_EQ(program[3].first, Opcode::CALL);
+    EXPECT_EQ(program[4].first, Opcode::CALL);
+    EXPECT_EQ(program[6].first, Opcode::CALL);
 }
 
-// Тесты для логических операторов
-TEST_F(PostfixCompilerTest, CompilesLogicalExpression)
+TEST_F(PostfixCompilerTest, can_compile_logical_operators)
 {
-    // Регистрируем переменные
     VariableInfo var1("flag1", execContext.typeStorage().getTypeId("boolean").value(), false);
     VariableInfo var2("flag2", execContext.typeStorage().getTypeId("boolean").value(), false);
     execContext.variableStorage().registerVariable(var1, true);
@@ -480,13 +651,12 @@ TEST_F(PostfixCompilerTest, CompilesLogicalExpression)
 
     auto program = std::get<Program>(result);
     ASSERT_GE(program.size(), 5);
-    EXPECT_EQ(program[2].first, Opcode::CALL); // NOT
-    EXPECT_EQ(program[3].first, Opcode::CALL); // AND
-    EXPECT_EQ(program.back().first, Opcode::CALL); // OR
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+    EXPECT_EQ(program[3].first, Opcode::CALL);
+    EXPECT_EQ(program.back().first, Opcode::CALL);
 }
 
-// Тесты для операторов сравнения
-TEST_F(PostfixCompilerTest, CompilesComparisonOperators)
+TEST_F(PostfixCompilerTest, can_compile_comparison_operators)
 {
     PostfixCompiler compiler(execContext);
 
@@ -506,17 +676,15 @@ TEST_F(PostfixCompilerTest, CompilesComparisonOperators)
 
     auto program = std::get<Program>(result);
     ASSERT_EQ(program.size(), 7);
-    EXPECT_EQ(program[2].first, Opcode::CALL); // <
-    EXPECT_EQ(program[5].first, Opcode::CALL); // >=
-    EXPECT_EQ(program[6].first, Opcode::CALL); // AND
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+    EXPECT_EQ(program[5].first, Opcode::CALL);
+    EXPECT_EQ(program[6].first, Opcode::CALL);
 }
 
-// Тесты для граничных значений чисел
-TEST_F(PostfixCompilerTest, HandlesIntegerBoundaryValues)
+TEST_F(PostfixCompilerTest, can_handle_min_max_int_values)
 {
     PostfixCompiler compiler(execContext);
 
-    // Максимальное значение для 64-битного знакового целого
     std::string maxInt64 = "9223372036854775807";
     std::string minInt64 = "-9223372036854775808";
 
@@ -536,8 +704,7 @@ TEST_F(PostfixCompilerTest, HandlesIntegerBoundaryValues)
     auto result2 = compiler.compileExpression(tokens2);
     ASSERT_TRUE(std::holds_alternative<Program>(result2));
 
-    // Проверка переполнения
-    std::string overflowInt = "9223372036854775808"; // На 1 больше максимума
+    std::string overflowInt = "9223372036854775808";
     std::vector<Token> tokens3 = {
         {TokenType::INT, overflowInt, 0, overflowInt.size()},
         {TokenType::ENDOFFILE, "", overflowInt.size() + 1, overflowInt.size() + 1}
@@ -547,14 +714,13 @@ TEST_F(PostfixCompilerTest, HandlesIntegerBoundaryValues)
     ASSERT_TRUE(std::holds_alternative<SyntaxError>(result3));
 }
 
-TEST_F(PostfixCompilerTest, HandlesDoubleBoundaryValues)
+TEST_F(PostfixCompilerTest, can_hanle_double_min_max_values)
 {
     PostfixCompiler compiler(execContext);
 
-    // Максимальное и минимальное значения double
     std::string maxDouble = "1.7976931348623157E+308";
     std::string minDouble = "2.2250738585072014E-308";
-    std::string overflowDouble = "1.8E+308"; // Больше максимального
+    std::string overflowDouble = "1.8E+308";
 
     std::vector<Token> tokens1 = {
         {TokenType::FLOAT, maxDouble, 0, maxDouble.size()},
@@ -581,10 +747,8 @@ TEST_F(PostfixCompilerTest, HandlesDoubleBoundaryValues)
     ASSERT_TRUE(std::holds_alternative<SyntaxError>(result3));
 }
 
-// Тест для смешанных логических и арифметических выражений
-TEST_F(PostfixCompilerTest, CompilesMixedLogicalArithmeticExpression)
+TEST_F(PostfixCompilerTest, can_compile_arithmetic_and_logic_in_one_expr)
 {
-    // Регистрируем переменные
     VariableInfo var("x", execContext.typeStorage().getTypeId("integer").value(), false);
     execContext.variableStorage().registerVariable<long long>(var, 10);
 
@@ -610,13 +774,12 @@ TEST_F(PostfixCompilerTest, CompilesMixedLogicalArithmeticExpression)
 
     auto program = std::get<Program>(result);
     ASSERT_EQ(program.size(), 7);
-    EXPECT_EQ(program[2].first, Opcode::CALL); // >
-    EXPECT_EQ(program[5].first, Opcode::CALL); // <=
-    EXPECT_EQ(program[6].first, Opcode::CALL); // AND
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+    EXPECT_EQ(program[5].first, Opcode::CALL);
+    EXPECT_EQ(program[6].first, Opcode::CALL);
 }
 
-// Тест для проверки всех операторов
-TEST_F(PostfixCompilerTest, HandlesAllSupportedOperators)
+TEST_F(PostfixCompilerTest, can_handle_long_expression_with_multiple_operators)
 {
     PostfixCompiler compiler(execContext);
 
@@ -677,6 +840,139 @@ TEST_F(PostfixCompilerTest, HandlesAllSupportedOperators)
     ASSERT_TRUE(std::holds_alternative<Program>(result));
 
     auto program = std::get<Program>(result);
-    // Проверяем что все операторы обработаны
     EXPECT_EQ(program.size(), 38);
+}
+
+TEST_F(PostfixCompilerTest, error_on_binary_operator_without_left_argument)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::PLUS, "+", 2, 3},
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+TEST_F(PostfixCompilerTest, error_on_binary_operator_without_right_argument)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::MINUS, "-", 2, 3},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+TEST_F(PostfixCompilerTest, error_on_two_unary_operators_in_a_row)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::MINUS, "-", 0, 1},
+        {TokenType::MINUS, "-", 2, 3},
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+TEST_F(PostfixCompilerTest, error_on_two_binary_operators_in_a_row)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::PLUS, "+", 2, 3},
+        {TokenType::PLUS, "+", 2, 3},
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+TEST_F(PostfixCompilerTest, error_on_invalid_types)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::AND, "and", 2, 3},
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+TEST_F(PostfixCompilerTest, error_on_undeclared_variable)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::ID, "y", 0, 1},
+        {TokenType::EQUAL, "=", 2, 3},
+        {TokenType::ID, "x", 0, 1},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+
+TEST_F(PostfixCompilerTest, error_on_unclosed_parenthesis)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::LPAREN, "(", 0, 1},
+        {TokenType::INT, "2", 2, 3},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+TEST_F(PostfixCompilerTest, error_on_too_many_parenthesis)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens2 = {
+        {TokenType::LPAREN, "(", 0, 1},
+        {TokenType::INT, "2", 2, 3},
+        {TokenType::RPAREN, ")", 0, 1},
+        {TokenType::RPAREN, ")", 0, 1},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result2 = compiler.compileExpression(tokens2);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result2));
+}
+
+TEST_F(PostfixCompilerTest, error_on_two_values_in_a_row)
+{
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens1 = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::INT, "3", 2, 3},
+        {TokenType::ENDOFFILE, "", 4, 4}
+    };
+
+    auto result1 = compiler.compileExpression(tokens1);
+    ASSERT_TRUE(std::holds_alternative<SyntaxError>(result1));
 }
