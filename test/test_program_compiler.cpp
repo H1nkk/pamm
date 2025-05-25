@@ -1,44 +1,140 @@
 #include <gtest/gtest.h>
+#include "lexer/lexer.h"
 #include "expression_compiler/program_compiler.h"
 
 TEST(ProgramCompilerTest, cant_compile_without_program_name) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer("begin end.");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_without_begin_end) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer("program aaa;");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_without_variables) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer("program aaa; begin end.");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_with_one_variable) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_with_multiple_variables) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, _bar, __megabar: double;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_if_variables_have_same_name) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, _bar, foo: double;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_without_consts) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, _bar, ba: double;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_with_multiple_consts) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "sorokdva: integer = 42;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, _bar, ba: double;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_if_const_have_same_name) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "pi: integer = 42;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, _bar, foo: double;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_if_have_vars_and_consts_with_same_name) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, pi, foo: double;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_then_using_unknown_var_or_const) {

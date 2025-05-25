@@ -492,7 +492,7 @@ TEST_F(PostfixInterpreterTest, can_execute_notequal_bool)
     Intr::Program program = {
         {Intr::Opcode::LOAD, 0},
         {Intr::Opcode::LOAD, 1},
-        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NOT_EQUAL_BOOL}
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NOTEQUAL_BOOL}
     };
 
     auto result = interpreter.execute(program, execContext);

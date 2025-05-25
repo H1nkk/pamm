@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <memory>
 #include "lexer/lexer_token.h"
 #include "expression_interpreter/operation.h"
 
@@ -7,17 +8,20 @@ struct ExecutionContext;
 
 class ExecutionNode {
 private:
-    ExecutionNode* mpNext;
-    ExecutionNode* mpChild;
+    std::shared_ptr<ExecutionNode> mNext;
+    std::shared_ptr<ExecutionNode> mChild;
 public:
-    ExecutionNode(ExecutionNode* pNext, ExecutionNode* pChild) : mpNext(pNext), mpChild(pChild) {}
+    ExecutionNode(
+        const std::shared_ptr<ExecutionNode>& next, 
+        const std::shared_ptr<ExecutionNode>& child
+    ) : mNext(next), mChild(child) {}
 
-    ExecutionNode* getNext() const {
-        return mpNext;
+    std::shared_ptr<ExecutionNode> getNext() const {
+        return mNext;
     }
 
-    ExecutionNode* getChildrenRoot() const {
-        return mpChild;
+    std::shared_ptr<ExecutionNode> getChildrenRoot() const {
+        return mChild;
     }
 
     virtual void execute(const ExecutionContext& context) = 0;
@@ -26,7 +30,7 @@ public:
 
 class BlockNode : public ExecutionNode {
 public:
-    BlockNode(ExecutionNode* pNext, ExecutionNode* pChild)
+    BlockNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild)
         : ExecutionNode(pNext, pChild) {}
 
     virtual void execute(const ExecutionContext& context) override;
@@ -37,7 +41,7 @@ class WriteNode : public ExecutionNode {
 private:
     std::vector<Lexer::Token> mArgs;
 public:
-    WriteNode(ExecutionNode* pNext, ExecutionNode* pChild, const std::vector<Lexer::Token>& args)
+    WriteNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const std::vector<Lexer::Token>& args)
         : ExecutionNode(pNext, pChild), mArgs(args) {}
 
     virtual void execute(const ExecutionContext& context) override;
@@ -48,7 +52,7 @@ class ReadNode : public ExecutionNode {
 private:
     Lexer::Token mArg;
 public:
-    ReadNode(ExecutionNode* pNext, ExecutionNode* pChild, const Lexer::Token& arg) : ExecutionNode(pNext, pChild), mArg(arg) {}
+    ReadNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const Lexer::Token& arg) : ExecutionNode(pNext, pChild), mArg(arg) {}
 
     virtual void execute(const ExecutionContext& context) override;
     virtual ~ReadNode() {}
@@ -59,7 +63,7 @@ private:
     Lexer::Token mName;
     Intr::Program mProg;
 public:
-    AssignNode(ExecutionNode* pNext, ExecutionNode* pChild, const Lexer::Token& name, const Intr::Program& prog) 
+    AssignNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const Lexer::Token& name, const Intr::Program& prog) 
         : ExecutionNode(pNext, pChild), mName(name), mProg(prog) {}
 
     virtual void execute(const ExecutionContext& context) override;
@@ -70,7 +74,7 @@ class IfNode : public ExecutionNode {
 private:
     Intr::Program mExpr;
 public:
-    IfNode(ExecutionNode* pNext, ExecutionNode* pChild, const Intr::Program& expr) 
+    IfNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const Intr::Program& expr) 
         : ExecutionNode(pNext, pChild), mExpr(expr) {}
 
     virtual void execute(const ExecutionContext& context) override;

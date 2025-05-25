@@ -192,7 +192,7 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
                 pushValue((bool)(l == r));
                 break;
             }
-            case NOT_EQUAL_BOOL:
+            case NOTEQUAL_BOOL:
             {
                 bool r = popValue<bool>(), l = popValue<bool>();
                 pushValue((bool)(l != r));

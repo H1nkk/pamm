@@ -52,7 +52,7 @@ namespace Intr {
             EQUAL_BOOL,
             NOTEQUAL_INT,
             NOTEQUAL_DOUBLE,
-            NOT_EQUAL_BOOL,
+            NOTEQUAL_BOOL,
             
             AND_BOOL_BOOL,
             OR_BOOL_BOOL,
