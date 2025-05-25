@@ -12,6 +12,8 @@ template <typename T>
 class Stack
 {
 public:
+    using value_type = T;
+
     Stack(size_t sizeToReserve = 0) : mCapacity(0), mSize(0), mpMemory(nullptr)
     {
         reserve(sizeToReserve);

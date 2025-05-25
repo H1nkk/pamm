@@ -13,6 +13,7 @@
 #include <sstream>
 #include <algorithm>
 #include <sstream>
+#include <list>
 
 namespace Compiler {
 
@@ -165,15 +166,16 @@ namespace Compiler {
 
         std::vector<Token> mTokens;
         std::vector<PostfixMember> mMembers;
-        Intr::Program mProg;
+
+        std::list<Intr::Op> mOpList;
+
         Stack<PostfixMember> mStack;
         Stack<CompilationBlock> mBlocks;
-        Stack<DataTypeId> mTypes;
+        Stack<std::pair<DataTypeId, std::list<Intr::Op>::iterator>> mTypes;
 
         size_t mMemberIndex;
         PostfixMember mPrev;
         PostfixMember mCur;
-
 
         std::vector<PostfixMember> preprocess(const std::vector<Token> tokens) const
         {
@@ -224,8 +226,8 @@ namespace Compiler {
                 VariableId id = mExecContext.variableStorage().getId(token.value()).value();
                 DataTypeId type = mExecContext.variableStorage().getInfo(id).type();
 
-                mTypes.push(type);
-                mProg.push_back({ Intr::Opcode::LOAD, id });
+                mOpList.push_back({ Intr::Opcode::LOAD, id });
+                mTypes.push({ type, --mOpList.end() });
             } else if (token.type() == TokenType::INT)
             {
                 try
@@ -235,8 +237,8 @@ namespace Compiler {
                     DataTypeId type = mExecContext.typeStorage().getTypeId("integer").value();
                     VariableId id = mExecContext.variableStorage().getIdByLiteral(type, val);
 
-                    mTypes.push(type);
-                    mProg.push_back({ Intr::Opcode::LOAD, id });
+                    mOpList.push_back({ Intr::Opcode::LOAD, id });
+                    mTypes.push({ type, --mOpList.end() });
                 }
                 catch (std::out_of_range)
                 {
@@ -251,8 +253,8 @@ namespace Compiler {
                     DataTypeId type = mExecContext.typeStorage().getTypeId("double").value();
                     VariableId id = mExecContext.variableStorage().getIdByLiteral(type, val);
 
-                    mTypes.push(type);
-                    mProg.push_back({ Intr::Opcode::LOAD, id });
+                    mOpList.push_back({ Intr::Opcode::LOAD, id });
+                    mTypes.push({ type, --mOpList.end() });
                 }
                 catch (std::out_of_range)
                 {
@@ -273,7 +275,8 @@ namespace Compiler {
                 throw std::runtime_error(__FUNCTION__ ": compilation error occurred.");
             }
 
-            DataTypeId inpType = mTypes.top();
+            auto argVal = mTypes.top();
+            DataTypeId inpType = argVal.first;
             mTypes.pop();
 
             TokenType opType = mTokens[member.tokenIndex()].type();
@@ -286,12 +289,12 @@ namespace Compiler {
             {
                 const auto& func = suitableFunc.value();
 
-                mTypes.push(func.returnType());
-                mProg.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                mOpList.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                mTypes.push({ func.returnType(), --mOpList.end() });
                 return;
             }
 
-            mTypes.push(inpType);
+            mTypes.push(argVal);
 
             std::string typeName = mExecContext.typeStorage().getTypeInfo(inpType).value().name();
             throw SyntaxError{ mTokens[member.tokenIndex()].startPos(),
@@ -305,9 +308,11 @@ namespace Compiler {
                 throw std::runtime_error(__FUNCTION__ ": compilation error occurred.");
             }
 
-            DataTypeId rightType = mTypes.top();
+            auto argRight = mTypes.top();
+            DataTypeId rightType = argRight.first;
             mTypes.pop();
-            DataTypeId leftType = mTypes.top();
+            auto argLeft = mTypes.top();
+            DataTypeId leftType = argLeft.first;
             mTypes.pop();
 
             TokenType opType = mTokens[member.tokenIndex()].type();
@@ -320,13 +325,13 @@ namespace Compiler {
             {
                 const auto& func = suitableFunc.value();
 
-                mTypes.push(func.returnType());
-                mProg.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                mOpList.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                mTypes.push({ func.returnType(), --mOpList.end() });
                 return;
             }
 
-            mTypes.push(leftType);
-            mTypes.push(rightType);
+            mTypes.push(argLeft);
+            mTypes.push(argRight);
 
             std::string typeNameL = mExecContext.typeStorage().getTypeInfo(leftType).value().name();
             std::string typeNameR = mExecContext.typeStorage().getTypeInfo(rightType).value().name();
@@ -342,13 +347,17 @@ namespace Compiler {
             Token token = mTokens[member.tokenIndex()];
             std::string funcName = token.value();
 
+            Stack<typename decltype(mTypes)::value_type> mArgs;
             std::vector<DataTypeId> argTypes;
+            mArgs.reserve(argCount);
             argTypes.reserve(argCount);
 
             for (size_t i = 0; i < argCount; i++)
             {
-                argTypes.push_back(mTypes.top());
+                mArgs.push(mTypes.top());
                 mTypes.pop();
+
+                argTypes.push_back(mArgs.top().first);
             }
 
             std::reverse(argTypes.begin(), argTypes.end());
@@ -360,15 +369,15 @@ namespace Compiler {
             {
                 const auto& func = suitableFunc.value();
 
-                mTypes.push(func.returnType());
-                mProg.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                mOpList.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+                mTypes.push({ func.returnType(), --mOpList.end() });
                 return;
             }
 
-            // argTypes vector is reversed at this point, so we can just push its elements to mTypes
-            for (auto type : argTypes)
+            while (mArgs.size())
             {
-                mTypes.push(type);
+                mTypes.push(mArgs.top());
+                mArgs.pop();
             }
 
             std::stringstream error;
@@ -435,7 +444,7 @@ namespace Compiler {
         PostfixMember::Type curType() const { return mCur.type(); }
         PostfixMember::Type prevType() const { return mPrev.type(); }
 
-        const Intr::Program& getProgram() const { return mProg; }
+        Intr::Program getProgram() const { return Intr::Program(mOpList.begin(), mOpList.end()); }
 
         void nextTok()
         {
