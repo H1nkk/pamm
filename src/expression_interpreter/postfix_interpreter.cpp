@@ -1,5 +1,7 @@
 #include "expression_interpreter/postfix_interpreter.h"
 
+#include <cmath>
+
 std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Program& program, ExecutionContext& context)
 {
     while (mStack.size()) mStack.pop();
@@ -213,8 +215,53 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
                 pushValue(!popValue<bool>());
                 break;
             }
-            default:
+            case CAST_INT_DOUBLE:
+            {
+                pushValue(static_cast<double>(popValue<long long>()));
                 break;
+            }
+            case ABS_INT:
+            {
+                pushValue(abs(popValue<long long>()));
+                break;
+            }
+            case ABS_DOUBLE:
+            {
+                pushValue(abs(popValue<double>()));
+                break;
+            }
+            case EXP_DOUBLE:
+            {
+                pushValue(exp(popValue<double>()));
+                break;
+            }
+            case SIN_DOUBLE:
+            {
+                pushValue(sin(popValue<double>()));
+                break;
+            }
+            case COS_DOUBLE:
+            {
+                pushValue(cos(popValue<double>()));
+                break;
+            }
+            case FLOOR_DOUBLE:
+            {
+                pushValue(static_cast<long long>(floor(popValue<double>())));
+                break;
+            }
+            case CEIL_DOUBLE:
+            {
+                pushValue(static_cast<long long>(ceil(popValue<double>())));
+                break;
+            }
+            case ROUND_DOUBLE:
+            {
+                pushValue(static_cast<long long>(round(popValue<double>())));
+                break;
+            }
+            default:
+                throw std::runtime_error(__FUNCTION__ ": function is not supported.");
             }
         } else
         {

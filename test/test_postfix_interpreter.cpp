@@ -554,14 +554,158 @@ TEST_F(PostfixInterpreterTest, can_execute_not_bool)
     EXPECT_EQ(std::get<bool>(val), false);
 }
 
+TEST_F(PostfixInterpreterTest, can_convert_int_to_double)
+{
+    registerVariable("a", "integer", 10LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::CAST_INT_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), 10.0);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_abs_int)
+{
+    registerVariable("a", "integer", -10LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::ABS_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), 10LL);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_abs_double)
+{
+    registerVariable("a", "double", -10.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::ABS_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), 10.0);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_sin_double)
+{
+    registerVariable("a", "double", 123.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::SIN_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), sin(123.0));
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_cos_double)
+{
+    registerVariable("a", "double", 123.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::COS_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), cos(123.0));
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_exp_double)
+{
+    registerVariable("a", "double", 123.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::EXP_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), exp(123.0));
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_floor_double)
+{
+    registerVariable("a", "double", 123.5);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::FLOOR_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), static_cast<long long>(floor(123.5)));
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_ceil_double)
+{
+    registerVariable("a", "double", 123.5);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::CEIL_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), static_cast<long long>(ceil(123.5)));
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_round_double)
+{
+    registerVariable("a", "double", 123.5);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::ROUND_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), static_cast<long long>(round(123.5)));
+}
+
 TEST_F(PostfixInterpreterTest, error_on_zero_division_int)
 {
     registerVariable("a", "integer", 10LL);
     registerVariable("b", "integer", 0LL);
 
     Intr::Program program = {
-        {Intr::Opcode::LOAD, 0}, // a
-        {Intr::Opcode::LOAD, 1}, // b
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
         {Intr::Opcode::CALL, Intr::PostfixInterpreter::DIV_INT_INT}
     };
 

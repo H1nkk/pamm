@@ -56,7 +56,20 @@ namespace Intr {
             
             AND_BOOL_BOOL,
             OR_BOOL_BOOL,
-            NOT_BOOL
+            NOT_BOOL,
+
+            CAST_INT_DOUBLE,
+
+            ABS_INT,
+            ABS_DOUBLE,
+
+            EXP_DOUBLE,
+            SIN_DOUBLE,
+            COS_DOUBLE,
+            
+            FLOOR_DOUBLE,
+            CEIL_DOUBLE,
+            ROUND_DOUBLE,
         };
 
         /// @brief Выполнить программу, сгенерированную парсером
