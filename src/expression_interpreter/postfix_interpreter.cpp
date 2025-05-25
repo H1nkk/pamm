@@ -14,15 +14,29 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
             std::string typeName = context.typeStorage().getTypeInfo(info.type()).value().name();
 
             if (typeName == "integer")
+            {
                 mStack.push(context.variableStorage().getValue<long long>(varId));
+            }
             else if (typeName == "double")
+            {
                 mStack.push(context.variableStorage().getValue<double>(varId));
+            }
             else if (typeName == "boolean")
+            {
                 mStack.push(context.variableStorage().getValue<bool>(varId));
+            }
             else if (typeName == "string")
-                mStack.push(context.variableStorage().getValue<char*>(varId));
+            {
+                char* orig = context.variableStorage().getValue<char*>(varId);
+                size_t sz = strlen(orig) + 1;
+                char* nw = new char[sz];
+                strcpy(nw, orig);
+                mStack.push(nw);
+            }
             else
+            {
                 throw std::runtime_error(__FUNCTION__ ": type is not supported");
+            }
 
         } else if (op.first == Opcode::CALL)
         {

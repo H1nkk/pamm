@@ -296,4 +296,5 @@ TEST_F(PostfixInterpreterTest, StringOperations)
     DataValue val = std::get<DataValue>(result);
     ASSERT_TRUE(std::holds_alternative<char*>(val));
     EXPECT_STREQ(std::get<char*>(val), "test");
+    delete std::get<char*>(val);
 }
