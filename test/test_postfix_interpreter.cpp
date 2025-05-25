@@ -1,96 +1,3 @@
-//#include <gtest/gtest.h>
-//#include "expression_interpreter/postfix_interpreter.h"
-//
-//TEST(PostfixInterpreterTest, can_execute_single_integer)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_single_float)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_sum)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_subtraction)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_multiplication)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterText, can_execute_remainder)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_float_division)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_integer_division)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_less)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_greater)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_equal)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_not_equal)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_lessequal)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_greaterequal)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_and)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_or)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, can_execute_not)
-//{
-//    ADD_FAILURE();
-//}
-//
-//TEST(PostfixInterpreterTest, throw_on_zero_division)
-//{
-//    ADD_FAILURE();
-//}
-
 #include <gtest/gtest.h>
 #include "expression_interpreter/postfix_interpreter.h"
 #include "type_storage.h"
@@ -119,8 +26,37 @@ protected:
     Intr::PostfixInterpreter interpreter;
 };
 
-// Тесты для арифметических операций
-TEST_F(PostfixInterpreterTest, IntegerArithmetic)
+TEST_F(PostfixInterpreterTest, can_execute_single_integer)
+{
+    registerVariable("a", "integer", 10LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), 10LL);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_single_float)
+{
+    registerVariable("a", "double", 10.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), 10.0);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_sum_int)
 {
     registerVariable("a", "integer", 10LL);
     registerVariable("b", "integer", 3LL);
@@ -138,14 +74,86 @@ TEST_F(PostfixInterpreterTest, IntegerArithmetic)
     EXPECT_EQ(std::get<long long>(val), 13LL);
 }
 
-TEST_F(PostfixInterpreterTest, DoubleArithmetic)
+TEST_F(PostfixInterpreterTest, can_execute_sum_double)
 {
-    registerVariable("x", "double", 5.5);
-    registerVariable("y", "double", 2.5);
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
 
     Intr::Program program = {
-        {Intr::Opcode::LOAD, 0}, // x
-        {Intr::Opcode::LOAD, 1}, // y
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::ADD_DOUBLE_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), 10.0 + 3.0);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_sub_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::SUB_INT_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), 7LL);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_sub_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::SUB_DOUBLE_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), 10.0 - 3.0);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_mult_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::MULT_INT_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), 30LL);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_mult_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
         {Intr::Opcode::CALL, Intr::PostfixInterpreter::MULT_DOUBLE_DOUBLE}
     };
 
@@ -153,17 +161,17 @@ TEST_F(PostfixInterpreterTest, DoubleArithmetic)
     ASSERT_TRUE(std::holds_alternative<DataValue>(result));
     DataValue val = std::get<DataValue>(result);
     ASSERT_TRUE(std::holds_alternative<double>(val));
-    EXPECT_DOUBLE_EQ(std::get<double>(val), 5.5 * 2.5);
+    EXPECT_EQ(std::get<double>(val), 10.0 * 3.0);
 }
 
-TEST_F(PostfixInterpreterTest, IntegerDivision)
+TEST_F(PostfixInterpreterTest, can_execute_div_int)
 {
     registerVariable("a", "integer", 10LL);
     registerVariable("b", "integer", 3LL);
 
     Intr::Program program = {
-        {Intr::Opcode::LOAD, 0}, // a
-        {Intr::Opcode::LOAD, 1}, // b
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
         {Intr::Opcode::CALL, Intr::PostfixInterpreter::DIV_INT_INT}
     };
 
@@ -174,15 +182,82 @@ TEST_F(PostfixInterpreterTest, IntegerDivision)
     EXPECT_EQ(std::get<long long>(val), 3LL);
 }
 
-// Тесты для операций сравнения
-TEST_F(PostfixInterpreterTest, IntegerComparison)
+TEST_F(PostfixInterpreterTest, can_execute_div_double)
 {
-    registerVariable("a", "integer", 5LL);
-    registerVariable("b", "integer", 10LL);
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
 
     Intr::Program program = {
-        {Intr::Opcode::LOAD, 0}, // a
-        {Intr::Opcode::LOAD, 1}, // b
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::DIV_DOUBLE_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), 10.0 / 3.0);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_mod_int_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::MOD_INT_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), 1LL);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_negate_int)
+{
+    registerVariable("a", "integer", 10LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NEGATE_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<long long>(val));
+    EXPECT_EQ(std::get<long long>(val), -10LL);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_negate_double)
+{
+    registerVariable("a", "double", 10.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NEGATE_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<double>(val));
+    EXPECT_EQ(std::get<double>(val), -10.0);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_less_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
         {Intr::Opcode::CALL, Intr::PostfixInterpreter::LESS_INT}
     };
 
@@ -190,17 +265,161 @@ TEST_F(PostfixInterpreterTest, IntegerComparison)
     ASSERT_TRUE(std::holds_alternative<DataValue>(result));
     DataValue val = std::get<DataValue>(result);
     ASSERT_TRUE(std::holds_alternative<bool>(val));
-    EXPECT_TRUE(std::get<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
 }
 
-TEST_F(PostfixInterpreterTest, DoubleEquality)
+TEST_F(PostfixInterpreterTest, can_execute_less_double)
 {
-    registerVariable("x", "double", 3.14);
-    registerVariable("y", "double", 3.14);
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
 
     Intr::Program program = {
-        {Intr::Opcode::LOAD, 0}, // x
-        {Intr::Opcode::LOAD, 1}, // y
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::LESS_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_greater_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::GREATER_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_greater_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::GREATER_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_lessequal_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::LESSEQUAL_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_lessequal_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::LESSEQUAL_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_greaterequal_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::GREATEREQUAL_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_greaterequal_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::GREATEREQUAL_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_equal_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::EQUAL_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_equal_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
         {Intr::Opcode::CALL, Intr::PostfixInterpreter::EQUAL_DOUBLE}
     };
 
@@ -208,20 +427,107 @@ TEST_F(PostfixInterpreterTest, DoubleEquality)
     ASSERT_TRUE(std::holds_alternative<DataValue>(result));
     DataValue val = std::get<DataValue>(result);
     ASSERT_TRUE(std::holds_alternative<bool>(val));
-    EXPECT_TRUE(std::get<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
 }
 
-// Тесты для логических операций
-TEST_F(PostfixInterpreterTest, LogicalOperations)
+TEST_F(PostfixInterpreterTest, can_execute_equal_bool)
 {
-    registerVariable("t", "boolean", true);
-    registerVariable("f", "boolean", false);
+    registerVariable("a", "boolean", true);
+    registerVariable("b", "boolean", true);
 
     Intr::Program program = {
         {Intr::Opcode::LOAD, 0},
         {Intr::Opcode::LOAD, 1},
-        {Intr::Opcode::CALL, Intr::PostfixInterpreter::AND_BOOL_BOOL},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::EQUAL_BOOL}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_notequal_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 3LL);
+
+    Intr::Program program = {
         {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NOTEQUAL_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_notequal_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 3.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NOTEQUAL_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_notequal_bool)
+{
+    registerVariable("a", "boolean", true);
+    registerVariable("b", "boolean", true);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NOT_EQUAL_BOOL}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_and_bool)
+{
+    registerVariable("a", "boolean", true);
+    registerVariable("b", "boolean", false);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::AND_BOOL_BOOL}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
+}
+
+TEST_F(PostfixInterpreterTest, can_execute_or_bool)
+{
+    registerVariable("a", "boolean", true);
+    registerVariable("b", "boolean", false);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
         {Intr::Opcode::CALL, Intr::PostfixInterpreter::OR_BOOL_BOOL}
     };
 
@@ -229,11 +535,26 @@ TEST_F(PostfixInterpreterTest, LogicalOperations)
     ASSERT_TRUE(std::holds_alternative<DataValue>(result));
     DataValue val = std::get<DataValue>(result);
     ASSERT_TRUE(std::holds_alternative<bool>(val));
-    EXPECT_TRUE(std::get<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), true);
 }
 
-// Тесты для обработки ошибок
-TEST_F(PostfixInterpreterTest, DivisionByZero)
+TEST_F(PostfixInterpreterTest, can_execute_not_bool)
+{
+    registerVariable("a", "boolean", true);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::NOT_BOOL}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<bool>(val));
+    EXPECT_EQ(std::get<bool>(val), false);
+}
+
+TEST_F(PostfixInterpreterTest, error_on_zero_division_int)
 {
     registerVariable("a", "integer", 10LL);
     registerVariable("b", "integer", 0LL);
@@ -249,7 +570,39 @@ TEST_F(PostfixInterpreterTest, DivisionByZero)
     EXPECT_EQ(std::get<std::string>(result), "Zero division occurred! Error.");
 }
 
-TEST_F(PostfixInterpreterTest, TypeMismatch)
+TEST_F(PostfixInterpreterTest, error_on_zero_division_mod_int)
+{
+    registerVariable("a", "integer", 10LL);
+    registerVariable("b", "integer", 0LL);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::MOD_INT_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<std::string>(result));
+    EXPECT_EQ(std::get<std::string>(result), "Zero division occurred! Error.");
+}
+
+TEST_F(PostfixInterpreterTest, error_on_zero_division_double)
+{
+    registerVariable("a", "double", 10.0);
+    registerVariable("b", "double", 0.0);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::DIV_DOUBLE_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<std::string>(result));
+    EXPECT_EQ(std::get<std::string>(result), "Zero division occurred! Error.");
+}
+
+TEST_F(PostfixInterpreterTest, error_on_type_mismatch)
 {
     registerVariable("a", "integer", 10LL);
     registerVariable("b", "double", 3.14);
@@ -263,8 +616,7 @@ TEST_F(PostfixInterpreterTest, TypeMismatch)
     EXPECT_THROW(interpreter.execute(program, execContext), std::bad_variant_access);
 }
 
-// Тесты для граничных значений
-TEST_F(PostfixInterpreterTest, IntegerBoundaryValues)
+TEST_F(PostfixInterpreterTest, can_work_with_int_boundary_values)
 {
     registerVariable("max", "integer", LLONG_MAX);
     registerVariable("min", "integer", LLONG_MIN);
@@ -282,7 +634,7 @@ TEST_F(PostfixInterpreterTest, IntegerBoundaryValues)
     EXPECT_EQ(std::get<long long>(val), -1);
 }
 
-TEST_F(PostfixInterpreterTest, StringOperations)
+TEST_F(PostfixInterpreterTest, can_load_strings)
 {
     char str[] = "test";
     registerVariable("s", "string", str);
