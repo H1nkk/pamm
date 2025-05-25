@@ -445,7 +445,8 @@ namespace Compiler {
         PostfixMember::Type curType() const { return mCur.type(); }
         PostfixMember::Type prevType() const { return mPrev.type(); }
 
-        Intr::Program getProgram() const { return Intr::Program(mOpList.begin(), mOpList.end()); }
+        DataTypeId resultType() const { return mTypes.top().first; }
+        Intr::Program program() const { return Intr::Program(mOpList.begin(), mOpList.end()); }
 
         void nextTok()
         {
@@ -549,7 +550,7 @@ namespace Compiler {
     };
 
 
-    std::variant<Intr::Program, SyntaxError> PostfixCompiler::compileExpression(const std::vector<Lexer::Token>& tokens)
+    std::variant<PostfixCompilationResult, SyntaxError> PostfixCompiler::compileExpression(const std::vector<Lexer::Token>& tokens)
     {
         if (tokens.size() == 0 || tokens.back().type() != TokenType::ENDOFFILE)
             throw std::invalid_argument(__FUNCTION__ ": invalid token sequence");
@@ -588,7 +589,10 @@ namespace Compiler {
                 }
             } while (!ctx.isMember(PostfixMember::END));
 
-            return ctx.getProgram();
+            return PostfixCompilationResult{
+                ctx.resultType(),
+                ctx.program()
+            };
         }
         catch (SyntaxError e)
         {

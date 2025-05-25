@@ -7,6 +7,12 @@
 #include "syntax_error.h"
 
 namespace Compiler {
+    struct PostfixCompilationResult
+    {
+        DataTypeId resultType;
+        Intr::Program program;
+    };
+
     class PostfixCompiler final
     {
     private:
@@ -18,6 +24,6 @@ namespace Compiler {
         /// @brief Преобразовать последовательность токенов в программу для интерпретации
         /// @param tokens Последовательность токенов, которую нужно скомпилировать
         /// @return Программа или синтаксическая ошибка
-        std::variant<Intr::Program, SyntaxError> compileExpression(const std::vector<Lexer::Token>& tokens);
+        std::variant<PostfixCompilationResult, SyntaxError> compileExpression(const std::vector<Lexer::Token>& tokens);
     };
 }

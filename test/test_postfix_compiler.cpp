@@ -69,9 +69,10 @@ TEST_F(PostfixCompilerTest, can_compile_single_integer)
     };
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 1);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
 }
@@ -80,14 +81,13 @@ TEST_F(PostfixCompilerTest, can_compile_single_double)
 {
     PostfixCompiler compiler(execContext);
 
-    Lexer::Lexer("444").getAllTokens();
-    
     std::vector<Token> tokens = Lexer::Lexer("42.0").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 1);
     ASSERT_EQ(program.size(), 1);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
 }
@@ -99,9 +99,10 @@ TEST_F(PostfixCompilerTest, can_compile_addition)
     std::vector<Token> tokens = Lexer::Lexer("2+3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -115,9 +116,10 @@ TEST_F(PostfixCompilerTest, can_compile_subtraction)
     std::vector<Token> tokens = Lexer::Lexer("2-3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -131,9 +133,10 @@ TEST_F(PostfixCompilerTest, can_compile_multiplication)
     std::vector<Token> tokens = Lexer::Lexer("2 * 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -147,9 +150,10 @@ TEST_F(PostfixCompilerTest, can_compile_division)
     std::vector<Token> tokens = Lexer::Lexer("2/3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -163,9 +167,10 @@ TEST_F(PostfixCompilerTest, can_compile_int_division)
     std::vector<Token> tokens = Lexer::Lexer("2 div 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -179,9 +184,9 @@ TEST_F(PostfixCompilerTest, can_compile_modulo)
     std::vector<Token> tokens = Lexer::Lexer("2 mod 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -195,9 +200,9 @@ TEST_F(PostfixCompilerTest, can_compile_unary_minus)
     std::vector<Token> tokens = Lexer::Lexer("-3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 2);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::CALL);
@@ -210,9 +215,9 @@ TEST_F(PostfixCompilerTest, can_compile_equal)
     std::vector<Token> tokens = Lexer::Lexer("2 = 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -226,9 +231,9 @@ TEST_F(PostfixCompilerTest, can_compile_not_equal)
     std::vector<Token> tokens = Lexer::Lexer("2 <> 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -242,9 +247,9 @@ TEST_F(PostfixCompilerTest, can_compile_less)
     std::vector<Token> tokens = Lexer::Lexer("2 < 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -258,9 +263,9 @@ TEST_F(PostfixCompilerTest, can_compile_greater)
     std::vector<Token> tokens = Lexer::Lexer("2 > 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -274,9 +279,9 @@ TEST_F(PostfixCompilerTest, can_compile_lessequal)
     std::vector<Token> tokens = Lexer::Lexer("2 <= 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -290,9 +295,9 @@ TEST_F(PostfixCompilerTest, can_compile_greater_equal)
     std::vector<Token> tokens = Lexer::Lexer("2 >= 3").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -306,9 +311,9 @@ TEST_F(PostfixCompilerTest, can_compile_and)
     std::vector<Token> tokens = Lexer::Lexer("(3=3)and(3=3)").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 7);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -326,9 +331,10 @@ TEST_F(PostfixCompilerTest, can_compile_or)
     std::vector<Token> tokens = Lexer::Lexer("(3=3)or(3=3)").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 2);
     ASSERT_EQ(program.size(), 7);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -346,9 +352,9 @@ TEST_F(PostfixCompilerTest, can_compile_not)
     std::vector<Token> tokens = Lexer::Lexer("not (3=3)").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 4);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[1].first, Opcode::LOAD);
@@ -363,9 +369,10 @@ TEST_F(PostfixCompilerTest, can_handle_operator_precedence)
     std::vector<Token> tokens = Lexer::Lexer("2 + 3 * 4").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 5);
     EXPECT_EQ(program[3].first, Opcode::CALL);
     EXPECT_EQ(program[3].second, 3);
@@ -380,9 +387,9 @@ TEST_F(PostfixCompilerTest, can_handle_parentheses)
     std::vector<Token> tokens = Lexer::Lexer("(2 + 3) * 4").getAllTokens();
     
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 5);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[0].second, 0);
@@ -406,9 +413,10 @@ TEST_F(PostfixCompilerTest, can_compile_single_variable)
     std::vector<Token> tokens = Lexer::Lexer("x").getAllTokens();
     
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 1);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[0].second, 0);
@@ -429,9 +437,10 @@ TEST_F(PostfixCompilerTest, can_handle_function_calls)
     std::vector<Token> tokens = Lexer::Lexer("add(1, 2)").getAllTokens();
     
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 0);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[0].second, 0);
@@ -450,9 +459,10 @@ TEST_F(PostfixCompilerTest, can_handle_mixed_type_operators)
     std::vector<Token> tokens = Lexer::Lexer("2 + 3.5").getAllTokens();
     
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 1);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program.back().first, Opcode::CALL);
 }
@@ -467,9 +477,9 @@ TEST_F(PostfixCompilerTest, can_handle_implicit_type_casting)
     std::vector<Token> tokens = Lexer::Lexer("2 + 3.5").getAllTokens();
     
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 4);
     EXPECT_EQ(program[0].first, Opcode::LOAD);
     EXPECT_EQ(program[0].second, 0);
@@ -488,9 +498,9 @@ TEST_F(PostfixCompilerTest, can_compile_complex_arithmetic_expressions)
     std::vector<Token> tokens = Lexer::Lexer("2 + (3 * 4) - 5").getAllTokens();
     
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 7);
     EXPECT_EQ(program[3].first, Opcode::CALL);
     EXPECT_EQ(program[4].first, Opcode::CALL);
@@ -509,9 +519,9 @@ TEST_F(PostfixCompilerTest, can_compile_logical_operators)
     std::vector<Token> tokens = Lexer::Lexer("flag1 and (not flag2) or flag1").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_GE(program.size(), 5);
     EXPECT_EQ(program[2].first, Opcode::CALL);
     EXPECT_EQ(program[3].first, Opcode::CALL);
@@ -525,9 +535,9 @@ TEST_F(PostfixCompilerTest, can_compile_comparison_operators)
     std::vector<Token> tokens = Lexer::Lexer("5 < 10 and 10 >= 5").getAllTokens();
     
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
     ASSERT_EQ(program.size(), 7);
     EXPECT_EQ(program[2].first, Opcode::CALL);
     EXPECT_EQ(program[5].first, Opcode::CALL);
@@ -541,7 +551,7 @@ TEST_F(PostfixCompilerTest, can_handle_int_overflow)
     std::vector<Token> tokens1 = Lexer::Lexer("9223372036854775807").getAllTokens();
 
     auto result1 = compiler.compileExpression(tokens1);
-    ASSERT_TRUE(std::holds_alternative<Program>(result1));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result1));
 
     std::vector<Token> tokens2 = Lexer::Lexer("9223372036854775808").getAllTokens();
 
@@ -563,7 +573,7 @@ TEST_F(PostfixCompilerTest, can_hanle_double_min_max_values)
     };
 
     auto result1 = compiler.compileExpression(tokens1);
-    ASSERT_TRUE(std::holds_alternative<Program>(result1));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result1));
 
     std::vector<Token> tokens2 = {
         {TokenType::FLOAT, minDouble, 0, minDouble.size()},
@@ -571,7 +581,7 @@ TEST_F(PostfixCompilerTest, can_hanle_double_min_max_values)
     };
 
     auto result2 = compiler.compileExpression(tokens2);
-    ASSERT_TRUE(std::holds_alternative<Program>(result2));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result2));
 
     std::vector<Token> tokens3 = {
         {TokenType::FLOAT, overflowDouble, 0, overflowDouble.size()},
@@ -592,9 +602,10 @@ TEST_F(PostfixCompilerTest, can_compile_arithmetic_and_logic_in_one_expr)
     std::vector<Token> tokens = Lexer::Lexer("(x > 5) and ((x - 5) <= 20)").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 2);
     ASSERT_EQ(program.size(), 9);
     EXPECT_EQ(program[2].first, Opcode::CALL);
     EXPECT_EQ(program[5].first, Opcode::CALL);
@@ -609,9 +620,10 @@ TEST_F(PostfixCompilerTest, can_handle_long_expression_with_multiple_operators)
     std::vector<Token> tokens = Lexer::Lexer("1 + 5 * 2 / 4 - 3 mod 3 div 5 = 1 and 1 >= 0 or 0 <= 20 and (not (30 = 20)) and (4 < 5) or (5 > 10) or (4 <> 1)").getAllTokens();
 
     auto result = compiler.compileExpression(tokens);
-    ASSERT_TRUE(std::holds_alternative<Program>(result));
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
 
-    auto program = std::get<Program>(result);
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    EXPECT_EQ(std::get<PostfixCompilationResult>(result).resultType, 2);
     EXPECT_EQ(program.size(), 40);
 }
 

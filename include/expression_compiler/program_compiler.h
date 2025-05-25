@@ -46,6 +46,14 @@ namespace Compiler {
                 && !mContext.variableStorage().isVariableName(name);
         }
 
+        bool isVariableName(const std::string& name)
+        {
+            return mContext.variableStorage().isVariableName(name)
+                && !mContext.variableStorage().getInfo(
+                    mContext.variableStorage().getId(name).value()
+                ).isConstant();
+        }
+
         void initializeContext();
 
         void parseVariables();
@@ -54,6 +62,7 @@ namespace Compiler {
         void parseConstantsRow();
 
         std::shared_ptr<BlockNode> parseCodeBlock();
+        std::shared_ptr<ExecutionNode> parseStatement();
     public:
         ProgramCompiler(const std::vector<Lexer::Token>& tokens) : mTokens(tokens), mCurrentPosition(0)
         {

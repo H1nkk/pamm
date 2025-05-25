@@ -8,6 +8,7 @@ namespace Lexer {
         FLOAT, INT, ID, STRING,
         PROGRAM,
         CONST, VAR, BEGIN, END, DOT, COMMA, SEMICOLON, COLON,
+        READ, WRITE, WRITELN,
         LPAREN, RPAREN,
         IF, THEN, ELSE,
         ASSIGN, PLUS, MINUS, MULT, DIV, DIVINT, MOD,

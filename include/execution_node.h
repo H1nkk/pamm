@@ -3,6 +3,7 @@
 #include <memory>
 #include "lexer/lexer_token.h"
 #include "expression_interpreter/operation.h"
+#include "variables_storage.h"
 
 struct ExecutionContext;
 
@@ -15,6 +16,11 @@ public:
         const std::shared_ptr<ExecutionNode>& next, 
         const std::shared_ptr<ExecutionNode>& child
     ) : mNext(next), mChild(child) {}
+
+    void setNext(const std::shared_ptr<ExecutionNode>& val)
+    {
+        mNext = val;
+    }
 
     std::shared_ptr<ExecutionNode> getNext() const {
         return mNext;
@@ -50,9 +56,9 @@ public:
 
 class ReadNode : public ExecutionNode {
 private:
-    Lexer::Token mArg;
+    VariableId mId;
 public:
-    ReadNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const Lexer::Token& arg) : ExecutionNode(pNext, pChild), mArg(arg) {}
+    ReadNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, VariableId variableId) : ExecutionNode(pNext, pChild), mId(variableId) {}
 
     virtual void execute(const ExecutionContext& context) override;
     virtual ~ReadNode() {}

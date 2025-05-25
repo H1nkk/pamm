@@ -47,13 +47,100 @@ std::variant<ExecutionContext, SyntaxError> Compiler::ProgramCompiler::compilePr
 std::shared_ptr<BlockNode> Compiler::ProgramCompiler::parseCodeBlock()
 {
     matchToken(TokenType::BEGIN);
+    
+    std::shared_ptr<ExecutionNode> start = nullptr;
+    std::shared_ptr<ExecutionNode> prev = nullptr;
 
+    while (!isToken(TokenType::END))
+    {
+        std::shared_ptr<ExecutionNode> node = parseStatement();
 
+        if (start == nullptr)
+        {
+            start = node;
+            prev = node;
+        }
+        else
+        {
+            prev->setNext(node);
+            prev = node;
+        }
+    }
     // match some expressions here
 
     matchToken(TokenType::END);
 
-    return std::make_shared<BlockNode>(nullptr, nullptr);
+    return std::make_shared<BlockNode>(nullptr, start);
+}
+
+std::shared_ptr<ExecutionNode> Compiler::ProgramCompiler::parseStatement()
+{
+    if (isToken(TokenType::BEGIN))
+    {
+        return parseCodeBlock();
+    }
+
+    if (isToken(TokenType::READ))
+    {
+        matchToken(TokenType::READ);
+        matchToken(TokenType::LPAREN);
+
+        if (!isToken(TokenType::ID))
+            throw SyntaxError{ curToken().startPos(), "Expected variable name" };
+
+        std::string name = curToken().value();
+        if (!isVariableName(name))
+            throw SyntaxError{ curToken().startPos(), "Undeclared variable" };
+
+        VariableId id = mContext.variableStorage().getId(name).value();
+
+        matchToken(TokenType::ID);
+
+        matchToken(TokenType::RPAREN);
+        matchToken(TokenType::SEMICOLON);
+
+        return std::make_shared<ReadNode>(nullptr, nullptr, id);
+    }
+
+    if (isToken(TokenType::WRITE) || isToken(TokenType::WRITELN))
+    {
+
+    }
+
+    if (isToken(TokenType::ID))
+    {
+        // think what to do with read write writeln
+
+    }
+
+    if (isToken(TokenType::IF))
+    {
+        matchToken(TokenType::IF);
+        matchToken(TokenType::LPAREN);
+        
+        // compile logical expression
+
+        matchToken(TokenType::RPAREN);
+
+        std::shared_ptr<ExecutionNode> ifClause = nullptr;
+        std::shared_ptr<ExecutionNode> elseClause = nullptr;
+
+        if (isToken(TokenType::BEGIN)) ifClause = parseCodeBlock();
+        else ifClause = parseStatement();
+
+        if (isToken(TokenType::ELSE))
+        {
+            matchToken(TokenType::ELSE);
+            if (isToken(TokenType::BEGIN)) elseClause = parseCodeBlock();
+            else elseClause = parseStatement();
+        }
+
+        ifClause->setNext(elseClause);
+
+        //return std::make_shared<IfNode>(nullptr, ifClause, ???);
+    }
+
+    throw SyntaxError{ curToken().startPos(), "Expected statement" };
 }
 
 void Compiler::ProgramCompiler::initializeContext()
