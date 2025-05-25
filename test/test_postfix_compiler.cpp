@@ -1,13 +1,3 @@
-//#include <gtest/gtest.h>
-//#include "expression_compiler/postfix_compiler.h"
-
-
-//TEST(PostfixCompilerTest, can_compile_auto_typecasting) 
-//{
-//    ADD_FAILURE();
-//}
-
-
 #include <gtest/gtest.h>
 #include "expression_compiler/postfix_compiler.h"
 #include "lexer/lexer_token.h"
@@ -595,6 +585,35 @@ TEST_F(PostfixCompilerTest, can_handle_mixed_type_operators)
     auto program = std::get<Program>(result);
     ASSERT_EQ(program.size(), 3);
     EXPECT_EQ(program.back().first, Opcode::CALL);
+}
+
+TEST_F(PostfixCompilerTest, can_handle_implicit_type_casting)
+{
+    registerOperator("$operator+", { "double", "double" }, "double", 100001);
+    registerOperator("$cast", { "integer" }, "double", 100002);
+
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = {
+        {TokenType::INT, "2", 0, 1},
+        {TokenType::PLUS, "+", 2, 3},
+        {TokenType::FLOAT, "3.5", 4, 7},
+        {TokenType::ENDOFFILE, "", 8, 8}
+    };
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<Program>(result));
+
+    auto program = std::get<Program>(result);
+    ASSERT_EQ(program.size(), 4);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[0].second, 0);
+    EXPECT_EQ(program[1].first, Opcode::CALL);
+    EXPECT_EQ(program[1].second, 100002);
+    EXPECT_EQ(program[2].first, Opcode::LOAD);
+    EXPECT_EQ(program[2].second, 1);
+    EXPECT_EQ(program[3].first, Opcode::CALL);
+    EXPECT_EQ(program[3].second, 100001);
 }
 
 TEST_F(PostfixCompilerTest, can_compile_complex_arithmetic_expressions)

@@ -129,14 +129,13 @@ TEST_F(VariablesStorageTest, can_perform_value_operations) {
 
 TEST(FunctionInfoTest, function_info_correct) {
     std::vector<DataTypeId> argTypes = {0, 1};
-    FunctionInfo func("add", 0, argTypes, 1, 10);
+    FunctionInfo func("add", 0, argTypes, 1);
     
     EXPECT_EQ(func.name(), "add");
     EXPECT_EQ(func.returnType(), 0);
     EXPECT_EQ(func.argumentsCount(), 2);
     EXPECT_EQ(func.getArgument(0), 0);
     EXPECT_EQ(func.getArgument(1), 1);
-    EXPECT_EQ(func.cost(), 10);
     EXPECT_EQ(func.interpreterId(), 1);
 }
 
@@ -157,14 +156,19 @@ TEST_F(FunctionStorageTest, can_register_functions) {
     
     std::vector<DataTypeId> argTypes1 = {0, 0}; // int, int
     std::vector<DataTypeId> argTypes2 = {0, 1}; // int, float
+    std::vector<DataTypeId> argTypes3 = {1, 1}; // float, float
     
     FunctionInfo func1("add", 0, argTypes1, 1);
     FunctionInfo func2("add", 1, argTypes2, 2);
     FunctionInfo func3("sub", 0, argTypes1, 3);
+    FunctionInfo func4("sub", 1, argTypes3, 4);
+
+    FunctionInfo cast1("$cast", 1, { 0 }, 5);
     
     storage.registerFunction(func1);
     storage.registerFunction(func2);
     storage.registerFunction(func3);
+    storage.registerFunction(func4);
     
     EXPECT_TRUE(storage.isFunctionName("add"));
     EXPECT_TRUE(storage.isFunctionName("sub"));
@@ -172,18 +176,31 @@ TEST_F(FunctionStorageTest, can_register_functions) {
     
     auto found1 = storage.findFunction("add", argTypes1);
     EXPECT_TRUE(found1.has_value());
-    EXPECT_EQ(found1->interpreterId(), 1);
+    EXPECT_EQ(found1.value().casts.size(), 2);
+    EXPECT_EQ(found1->info.interpreterId(), 1);
     
     auto found2 = storage.findFunction("add", argTypes2);
     EXPECT_TRUE(found2.has_value());
-    EXPECT_EQ(found2->interpreterId(), 2);
+    EXPECT_EQ(found2->info.interpreterId(), 2);
     
     auto found3 = storage.findFunction("sub", argTypes1);
     EXPECT_TRUE(found3.has_value());
-    EXPECT_EQ(found3->interpreterId(), 3);
+    EXPECT_EQ(found3->info.interpreterId(), 3);
+
+    auto notFound = storage.findFunction("sub", argTypes2);
+    EXPECT_FALSE(notFound.has_value());
+
+    storage.registerFunction(cast1);
+
+    auto found4 = storage.findFunction("sub", argTypes2);
+    EXPECT_TRUE(found4.has_value());
+    EXPECT_EQ(found4.value().info.interpreterId(), 4);
+    EXPECT_EQ(found4.value().casts.size(), 2);
+    EXPECT_EQ(found4.value().casts[0].size(), 1);
+    EXPECT_EQ(found4.value().casts[0][0], 5);
     
     std::vector<DataTypeId> wrongArgs = {1, 1};
-    auto notFound = storage.findFunction("add", wrongArgs);
+    auto notFound1 = storage.findFunction("add", wrongArgs);
     EXPECT_FALSE(notFound.has_value());
     
     auto notFound2 = storage.findFunction("mul", argTypes1);

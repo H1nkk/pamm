@@ -7,41 +7,62 @@
 
 using FunctionId = unsigned long long;
 
-class FunctionInfo final {
+class FunctionInfo final
+{
 private:
     std::string mName;
     DataTypeId mReturnType;
     std::vector<DataTypeId> mArgumentTypes;
-    int32_t mCost; // only for type casting now
     FunctionId mInterpreterId;
 public:
     FunctionInfo(const std::string& name, const DataTypeId& retType,
-        const std::vector<DataTypeId> argTypes, FunctionId intrId, int32_t cost = 0) :
+        const std::vector<DataTypeId> argTypes, FunctionId intrId) :
         mName(name), mReturnType(retType), mArgumentTypes(argTypes),
-        mInterpreterId(intrId), mCost(cost) {}
+        mInterpreterId(intrId)
+    {}
 
     std::string name() const { return mName; }
     DataTypeId returnType() const { return mReturnType; }
-    
+
     size_t argumentsCount() const { return mArgumentTypes.size(); }
     DataTypeId getArgument(size_t index) const { return mArgumentTypes[index]; }
 
-    int32_t cost() const { return mCost; }
     FunctionId interpreterId() const { return mInterpreterId; }
 
     friend class FunctionStorage;
 };
 
-class FunctionStorage final {
-private:
-    std::map<std::string, std::vector<FunctionInfo>> mFunctions;
+struct SuitableFunction
+{
+    FunctionInfo info;
+    std::vector<std::vector<FunctionId>> casts;
+};
 
+class FunctionStorage final
+{
+private:
     const TypeStorage& mTypeStorage;
+
+    std::map<std::string, std::vector<FunctionInfo>> mFunctions;
+    std::map<std::pair<DataTypeId, DataTypeId>, FunctionId> mTypeCasts;
+
 public:
     FunctionStorage(const TypeStorage& typeStorage) : mTypeStorage(typeStorage) {}
 
-    void registerFunction(const FunctionInfo& funcInfo) {
+    void registerFunction(const FunctionInfo& funcInfo)
+    {
         mFunctions[funcInfo.name()].push_back(funcInfo);
+
+        if (funcInfo.name().starts_with("$cast"))
+        {
+            if (funcInfo.argumentsCount() != 1)
+                throw std::runtime_error(__FUNCTION__ ": cast function must have exactly one argument");
+
+            DataTypeId fromType = funcInfo.getArgument(0);
+            DataTypeId toType = funcInfo.returnType();
+
+            mTypeCasts[{ fromType, toType }] = funcInfo.interpreterId();
+        }
     }
 
     bool isFunctionName(const std::string& name) const
@@ -49,25 +70,73 @@ public:
         return mFunctions.count(name);
     }
 
-    std::optional<FunctionInfo> findFunction(const std::string& name, 
-        const std::vector<DataTypeId>& arguments) const {
-
+    std::optional<SuitableFunction> findFunction(const std::string& name,
+        const std::vector<DataTypeId>& arguments) const
+    {
         auto iter = mFunctions.find(name);
 
-        if (iter != mFunctions.end())
+        if (iter == mFunctions.end())
+            return std::nullopt;
+
+        int optimalCost = INT_MAX;
+        size_t optimalIndex = 0;
+
+        for (size_t i = 0; i < iter->second.size(); i++)
         {
-            // add type casting management
-            for (const auto& row : iter->second)
+            const auto& info = iter->second[i];
+
+            if (info.argumentsCount() != arguments.size())
+                continue;
+
+            int cost = 0;
+
+            for (size_t j = 0; j < info.argumentsCount(); j++)
             {
-                if (name == row.name() &&
-                    std::equal(arguments.begin(), arguments.end(), row.mArgumentTypes.begin())
-                    )
+                DataTypeId targetType = info.getArgument(j);
+                DataTypeId currentType = arguments[j];
+
+                if (targetType == currentType) continue;
+
+                // targetType != currentType
+                if (!mTypeCasts.contains({ currentType, targetType }))
                 {
-                    return row;
+                    cost = INT_MAX;
+                    break;
+                } else
+                {
+                    cost++;
                 }
+            }
+
+            if (cost < optimalCost)
+            {
+                optimalCost = cost;
+                optimalIndex = i;
             }
         }
 
-        return std::nullopt;
+        if (optimalCost < INT_MAX)
+        {
+            const auto& info = iter->second[optimalIndex];
+            SuitableFunction res{
+                info,
+                std::vector<std::vector<FunctionId>>(arguments.size())
+            };
+            
+            for (size_t i = 0; i < info.argumentsCount(); i++)
+            {
+                DataTypeId targetType = info.getArgument(i);
+                DataTypeId currentType = arguments[i];
+
+                if (targetType == currentType) continue;
+
+                res.casts[i].push_back(mTypeCasts.at({ currentType, targetType }));
+            }
+
+            return res;
+        } else
+        {
+            return std::nullopt;
+        }
     }
 };

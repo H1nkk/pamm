@@ -212,6 +212,40 @@ namespace Compiler {
             return res;
         }
 
+        bool compileFuncCallWithCasts(const std::string& name,
+            const std::vector<typename decltype(mTypes)::value_type>& arguments)
+        {
+            std::vector<DataTypeId> argTypes(arguments.size());
+            for (size_t i = 0; i < arguments.size(); i++)
+                argTypes[i] = arguments[i].first;
+
+            auto suitableFunc = mExecContext.functionStorage().findFunction(
+                name, argTypes
+            );
+
+            if (!suitableFunc.has_value())
+                return false;
+
+            const auto& func = suitableFunc.value().info;
+            const auto& typeCasts = suitableFunc.value().casts;
+
+            for (size_t i = 0; i < arguments.size(); i++)
+            {
+                auto insertIter = arguments[i].second;
+                ++insertIter;
+
+                for (size_t j = 0; j < typeCasts[i].size(); j++)
+                {
+                    mOpList.insert(insertIter, { Intr::Opcode::CALL, typeCasts[i][j] });
+                    ++insertIter;
+                }
+            }
+
+            mOpList.push_back({ Intr::Opcode::CALL, func.interpreterId() });
+            mTypes.push({ func.returnType(), --mOpList.end() });
+            return true;
+        }
+
         void compileValue(const PostfixMember& member)
         {
             Token token = mTokens[member.tokenIndex()];
@@ -276,27 +310,17 @@ namespace Compiler {
             }
 
             auto argVal = mTypes.top();
-            DataTypeId inpType = argVal.first;
             mTypes.pop();
 
             TokenType opType = mTokens[member.tokenIndex()].type();
 
-            auto suitableFunc = mExecContext.functionStorage().findFunction(
-                unaryOperatorMappings.at(opType).funcName, { inpType }
-            );
-
-            if (suitableFunc.has_value())
-            {
-                const auto& func = suitableFunc.value();
-
-                mOpList.push_back({ Intr::Opcode::CALL, func.interpreterId() });
-                mTypes.push({ func.returnType(), --mOpList.end() });
-                return;
-            }
+            if (compileFuncCallWithCasts(
+                unaryOperatorMappings.at(opType).funcName, { argVal }
+            )) return;
 
             mTypes.push(argVal);
 
-            std::string typeName = mExecContext.typeStorage().getTypeInfo(inpType).value().name();
+            std::string typeName = mExecContext.typeStorage().getTypeInfo(argVal.first).value().name();
             throw SyntaxError{ mTokens[member.tokenIndex()].startPos(),
                 "No suitable operator '" + mTokens[member.tokenIndex()].value() + "' found for type " + typeName };
         }
@@ -309,32 +333,21 @@ namespace Compiler {
             }
 
             auto argRight = mTypes.top();
-            DataTypeId rightType = argRight.first;
             mTypes.pop();
             auto argLeft = mTypes.top();
-            DataTypeId leftType = argLeft.first;
             mTypes.pop();
 
             TokenType opType = mTokens[member.tokenIndex()].type();
 
-            auto suitableFunc = mExecContext.functionStorage().findFunction(
-                binaryOperatorMappings.at(opType).funcName, { leftType, rightType }
-            );
-
-            if (suitableFunc.has_value())
-            {
-                const auto& func = suitableFunc.value();
-
-                mOpList.push_back({ Intr::Opcode::CALL, func.interpreterId() });
-                mTypes.push({ func.returnType(), --mOpList.end() });
-                return;
-            }
+            if (compileFuncCallWithCasts(
+                binaryOperatorMappings.at(opType).funcName, { argLeft, argRight }
+            )) return;
 
             mTypes.push(argLeft);
             mTypes.push(argRight);
 
-            std::string typeNameL = mExecContext.typeStorage().getTypeInfo(leftType).value().name();
-            std::string typeNameR = mExecContext.typeStorage().getTypeInfo(rightType).value().name();
+            std::string typeNameL = mExecContext.typeStorage().getTypeInfo(argLeft.first).value().name();
+            std::string typeNameR = mExecContext.typeStorage().getTypeInfo(argRight.first).value().name();
             throw SyntaxError{ mTokens[member.tokenIndex()].startPos(),
                 "No suitable operator '" + mTokens[member.tokenIndex()].value() + "' found for types: " + typeNameL + ", " + typeNameR };
         }
@@ -347,47 +360,35 @@ namespace Compiler {
             Token token = mTokens[member.tokenIndex()];
             std::string funcName = token.value();
 
-            Stack<typename decltype(mTypes)::value_type> mArgs;
-            std::vector<DataTypeId> argTypes;
-            mArgs.reserve(argCount);
-            argTypes.reserve(argCount);
+            std::vector<typename decltype(mTypes)::value_type> args;
+
+            args.reserve(argCount);
 
             for (size_t i = 0; i < argCount; i++)
             {
-                mArgs.push(mTypes.top());
+                args.push_back(mTypes.top());
                 mTypes.pop();
-
-                argTypes.push_back(mArgs.top().first);
             }
 
-            std::reverse(argTypes.begin(), argTypes.end());
-            auto suitableFunc = mExecContext.functionStorage().findFunction(
-                funcName, argTypes
-            );
+            std::reverse(args.begin(), args.end());
 
-            if (suitableFunc.has_value())
+            if (compileFuncCallWithCasts(
+                funcName, args
+            )) return;
+
+            for (size_t i = 0; i < args.size(); i++)
             {
-                const auto& func = suitableFunc.value();
-
-                mOpList.push_back({ Intr::Opcode::CALL, func.interpreterId() });
-                mTypes.push({ func.returnType(), --mOpList.end() });
-                return;
-            }
-
-            while (mArgs.size())
-            {
-                mTypes.push(mArgs.top());
-                mArgs.pop();
+                mTypes.push(args[i]);
             }
 
             std::stringstream error;
             error << "No suitable function found for ";
             error << funcName;
             error << '(';
-            for (size_t i = 0; i < argTypes.size(); i++)
+            for (size_t i = 0; i < args.size(); i++)
             {
-                error << mExecContext.typeStorage().getTypeInfo(argTypes[i]).value().name();
-                error << (i + 1 == argTypes.size() ? ')' : ',');
+                error << mExecContext.typeStorage().getTypeInfo(args[i].first).value().name();
+                error << (i + 1 == args.size() ? ')' : ',');
             }
 
             throw SyntaxError{ token.startPos(), error.str() };
