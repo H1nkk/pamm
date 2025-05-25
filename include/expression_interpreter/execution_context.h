@@ -13,7 +13,7 @@ private:
 
     BlockNode* mRoot;
 public:
-    ExecutionContext() : mVariableStorage(mTypeStorage), mFunctionStorage(mTypeStorage) {}
+    ExecutionContext() : mVariableStorage(mTypeStorage), mFunctionStorage(mTypeStorage), mRoot(nullptr) {}
 
     TypeStorage& typeStorage() { return mTypeStorage; }
     VariablesStorage& variableStorage() { return mVariableStorage; }
