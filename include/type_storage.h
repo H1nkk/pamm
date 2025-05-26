@@ -3,6 +3,9 @@
 #include <unordered_map>
 #include <stdexcept>
 #include <optional>
+#include <variant>
+#include <type_traits>
+#include "data_values.h"
 
 using DataTypeId = unsigned long long;
 
@@ -10,14 +13,17 @@ class DataType final
 {
 private:
     std::string mName;
-    size_t mSize;
+    size_t mDataValueIndex;
 public:
-    DataType(const std::string& name, size_t size) : mName(name), mSize(size) {}
+    DataType(const std::string& name, size_t dataValueIndex) : mName(name), mDataValueIndex(dataValueIndex) {
+        if (dataValueIndex >= std::variant_size_v<DataValue>)
+            throw std::runtime_error(__FUNCTION__ ": dataValueIndex invalid.");
+    }
 
     std::string name() const { return mName; }
-    size_t size() const { return mSize; }
+    size_t index() const { return mDataValueIndex; }
 
-    bool operator==(const DataType& other) const { return mName == other.mName && mSize == other.mSize; }
+    bool operator==(const DataType& other) const { return mName == other.mName && mDataValueIndex == other.mDataValueIndex; }
 };
 
 class TypeStorage final

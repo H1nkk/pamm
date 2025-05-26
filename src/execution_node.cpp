@@ -29,8 +29,8 @@ void WriteNode::execute(ExecutionContext& context)
             std::cout << std::get<long long>(val);
         else if (std::holds_alternative<bool>(val))
             std::cout << std::get<bool>(val);
-        else if (std::holds_alternative<char*>(val))
-            std::cout << std::get<char*>(val);
+        else if (std::holds_alternative<std::string>(val))
+            std::cout << std::get<std::string>(val);
         else
             throw std::runtime_error(__FUNCTION__ ": data type is not supported.");
     }
@@ -62,6 +62,7 @@ void ReadNode::execute(ExecutionContext& context)
     {
         std::string val;
         std::cin >> val;
+        context.variableStorage().setValue(mId, val);
     } else
         throw std::runtime_error(__FUNCTION__ ": unknown type.");
 }
@@ -98,8 +99,8 @@ void AssignNode::execute(ExecutionContext& context)
         context.variableStorage().setValue(mId, std::get<long long>(val));
     else if (std::holds_alternative<bool>(val))
         context.variableStorage().setValue(mId, std::get<bool>(val));
-    else if (std::holds_alternative<char*>(val))
-        context.variableStorage().setValue(mId, std::get<char*>(val));
+    else if (std::holds_alternative<std::string>(val))
+        context.variableStorage().setValue(mId, std::get<std::string>(val));
     else
         throw std::runtime_error(__FUNCTION__ ": data type is not supported.");
 }

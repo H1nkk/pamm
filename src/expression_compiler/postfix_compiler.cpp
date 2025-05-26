@@ -300,11 +300,8 @@ namespace Compiler {
                 std::string val = token.value();
                 val = val.substr(1, val.size() - 2);
 
-                char* cstr = new char[val.size() + 1];
-                strcpy(cstr, val.c_str());
-
                 DataTypeId type = mExecContext.typeStorage().getTypeId("string").value();
-                VariableId id = mExecContext.variableStorage().getIdByLiteral<char*>(type, cstr);
+                VariableId id = mExecContext.variableStorage().getIdByLiteral<std::string>(type, val);
 
                 mOpList.push_back({ Intr::Opcode::LOAD, id });
                 mTypes.push({ type, --mOpList.end() });

@@ -1,5 +1,6 @@
 #include "expression_compiler/program_compiler.h"
 #include "expression_interpreter/postfix_interpreter.h"
+#include "variant_index.h"
 
 using Lexer::Token;
 using Lexer::TokenType;
@@ -187,13 +188,13 @@ std::shared_ptr<ExecutionNode> Compiler::ProgramCompiler::parseStatement()
 
 void Compiler::ProgramCompiler::initializeContext()
 {
-    DataType intType("integer", sizeof(long long));
+    DataType intType("integer", variant_index<DataValue, long long>());
     DataTypeId intId = mContext.typeStorage().registerType(intType);
-    DataType doubleType("double", sizeof(double));
+    DataType doubleType("double", variant_index<DataValue, double>());
     DataTypeId doubleId = mContext.typeStorage().registerType(doubleType);
-    DataType boolType("boolean", sizeof(bool));
+    DataType boolType("boolean", variant_index<DataValue, bool>());
     DataTypeId boolId = mContext.typeStorage().registerType(boolType);
-    DataType stringType("string", sizeof(char*));
+    DataType stringType("string", variant_index<DataValue, std::string>());
     DataTypeId stringId = mContext.typeStorage().registerType(stringType);
 
     mContext.functionStorage().registerFunction({
@@ -373,11 +374,7 @@ void Compiler::ProgramCompiler::parseVariablesRow()
         else if (typeName == "double")
             mContext.variableStorage().registerVariable<double>(info, 0.0);
         else if (typeName == "string")
-        {
-            char* str = new char[1];
-            str[0] = 0;
-            mContext.variableStorage().registerVariable<char*>(info, str);
-        }
+            mContext.variableStorage().registerVariable<std::string>(info, "");
         else
             throw SyntaxError{ curToken().startPos(), "Expected integer or double type" };
     }
@@ -462,12 +459,9 @@ void Compiler::ProgramCompiler::parseConstantsRow()
         std::string val = curToken().value();
         val = val.substr(1, val.size() - 2);
 
-        char* cstr = new char[val.size() + 1];
-        strcpy(cstr, val.c_str());
-
         DataTypeId type = mContext.typeStorage().getTypeId("string").value();
         VariableInfo info(name, type, true);
-        mContext.variableStorage().registerVariable(info, cstr);
+        mContext.variableStorage().registerVariable(info, val);
         matchToken(TokenType::STRING);
     }
     else

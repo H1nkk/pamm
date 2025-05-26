@@ -433,7 +433,7 @@ class ThreadWithParamSupport : public ThreadWithParamBase {
     DWORD thread_id;
     HANDLE thread_handle = ::CreateThread(
         nullptr,  // Default security.
-        0,        // Default stack size.
+        0,        // Default stack index.
         &ThreadWithParamSupport::ThreadMain,
         param,        // Parameter to ThreadMainStatic
         0x0,          // Default creation flags.
@@ -609,7 +609,7 @@ class ThreadLocalRegistryImpl {
     DWORD watcher_thread_id;
     HANDLE watcher_thread =
         ::CreateThread(nullptr,  // Default security.
-                       0,        // Default stack size
+                       0,        // Default stack index
                        &ThreadLocalRegistryImpl::WatcherThreadFunc,
                        reinterpret_cast<LPVOID>(watcher_thread_params),
                        CREATE_SUSPENDED, &watcher_thread_id);
@@ -1254,7 +1254,7 @@ std::string ReadEntireFile(FILE* file) {
   fseek(file, 0, SEEK_SET);
 
   // Keeps reading the file until we cannot read further or the
-  // pre-determined file size is reached.
+  // pre-determined file index is reached.
   do {
     bytes_last_read =
         fread(buffer + bytes_read, 1, file_size - bytes_read, file);

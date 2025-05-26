@@ -5,6 +5,8 @@
 #include <format>
 #include <qapplication>
 #include <qpushbutton>
+#include <QObject>
+#include <QProcess>
 #include <QElapsedTimer>
 #include <QKeyEvent>
 #include <QLineEdit>
@@ -174,22 +176,28 @@ void consoleEnterHandler(Ui::MainWindow* ui) // TODO
 
 }
 
-void run(Ui::MainWindow* ui) // TODO
+void run(Ui::MainWindow* ui)
 {
-    std::string str = ui->textEdit->toPlainText().toUtf8().constData();
+    std::string code = ui->textEdit->toPlainText().toUtf8().constData();
 
-    ExecutionDriver driver;
-    auto res = driver.execute(str);
+    QProcess* process = new QProcess();
 
-    if (std::holds_alternative<SyntaxError>(res))
-    {
-        // hightlignt error
-        std::cout << "Syntax error:" << std::get<SyntaxError>(res).message << std::endl;
-    }
-    else if (std::holds_alternative<std::string>(res))
-    {
-        std::cout << "Runtime error: " << std::get<std::string>(res) << std::endl;
-    }
+    QProcess::connect(process, &QProcess::readyReadStandardError, [=]()
+        {
+            QString err = process->readAllStandardError();
+            ui->consoleContainer->insertPlainText(err);
+        });
+
+    QProcess::connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+        [=](int code, QProcess::ExitStatus status)
+        {
+            qDebug() << "Process finished with code:" << code;
+        });
+
+    process->setProcessChannelMode(QProcess::ProcessChannelMode::SeparateChannels);
+    process->start("compiler_app_pamm.exe");
+    process->write(QByteArray::fromStdString(code));
+    process->closeWriteChannel();
 }
 
 void changeRowScrollBar(Ui::MainWindow* ui) 

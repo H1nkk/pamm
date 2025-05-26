@@ -2,29 +2,29 @@
 #include "type_storage.h"
 #include "variables_storage.h"
 #include "function_storage.h"
+#include "variant_index.h"
 
 TEST(DataTypeTest, data_type_correct) {
-    DataType type1("int", 4);
-    DataType type2("float", 4);
-    DataType type3("int", 8);
-    DataType type4("int", 8);
+    constexpr size_t integerIndex = variant_index<DataValue, long long>();
+    constexpr size_t doubleIndex = variant_index<DataValue, double>();
+    DataType type1("integer", integerIndex);
+    DataType type2("double", doubleIndex);
+    DataType type3("integer", integerIndex);
 
-    EXPECT_EQ(type1.name(), "int");
-    EXPECT_EQ(type1.size(), 4);
-    EXPECT_EQ(type2.name(), "float");
-    EXPECT_EQ(type2.size(), 4);
+    EXPECT_EQ(type1.name(), "integer");
+    EXPECT_EQ(type1.index(), integerIndex);
+    EXPECT_EQ(type2.name(), "double");
+    EXPECT_EQ(type2.index(), doubleIndex);
     
-    EXPECT_TRUE(type3 == type4);
-    EXPECT_FALSE(type1 == type3);
+    EXPECT_TRUE(type1 == type3);
     EXPECT_FALSE(type1 == type2);
 }
 
-// Тесты для TypeStorage
 TEST(TypeStorageTest, can_perform_type_registration) {
     TypeStorage storage;
     
-    DataType type1("int", 4);
-    DataType type2("float", 4);
+    DataType type1("int", variant_index<DataValue, long long>());
+    DataType type2("float", variant_index<DataValue, double>());
     
     auto id1 = storage.registerType(type1);
     auto id2 = storage.registerType(type2);
@@ -41,7 +41,8 @@ TEST(TypeStorageTest, can_perform_type_registration) {
     EXPECT_FALSE(storage.getTypeId("double").has_value());
     
     EXPECT_EQ(storage.getTypeInfo(id1).value().name(), "int");
-    EXPECT_EQ(storage.getTypeInfo(id1).value().size(), 4);
+    constexpr size_t intIndex = variant_index<DataValue, long long>();
+    EXPECT_EQ(storage.getTypeInfo(id1).value().index(), intIndex);
     EXPECT_EQ(storage.getTypeInfo(id2).value().name(), "float");
     EXPECT_FALSE(storage.getTypeInfo(999).has_value());
     
@@ -65,8 +66,8 @@ TEST(VariableInfoTest, variable_info_correct) {
 class VariablesStorageTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        DataType type1("int", 4);
-        DataType type2("float", 4);
+        DataType type1("integer", variant_index<DataValue, long long>());
+        DataType type2("double", variant_index<DataValue, double>());
         typeStorage.registerType(type1);
         typeStorage.registerType(type2);
     }
@@ -80,8 +81,8 @@ TEST_F(VariablesStorageTest, can_register_variables) {
     VariableInfo var1("x", 0, false);
     VariableInfo var2("y", 1, true);
     
-    auto id1 = storage.registerVariable(var1, 42);
-    auto id2 = storage.registerVariable(var2, 3.14f);
+    auto id1 = storage.registerVariable(var1, 42LL);
+    auto id2 = storage.registerVariable(var2, 3.14);
     
     EXPECT_EQ(id1, 0);
     EXPECT_EQ(id2, 1);
@@ -102,7 +103,7 @@ TEST_F(VariablesStorageTest, can_register_variables) {
     EXPECT_EQ(storage.getInfo(id2).type(), 1);
     EXPECT_TRUE(storage.getInfo(id2).isConstant());
     
-    EXPECT_THROW(storage.registerVariable(var1, 10), std::runtime_error);
+    EXPECT_THROW(storage.registerVariable(var1, 10LL), std::runtime_error);
 }
 
 TEST_F(VariablesStorageTest, can_perform_value_operations) {
@@ -111,20 +112,20 @@ TEST_F(VariablesStorageTest, can_perform_value_operations) {
     VariableInfo var1("x", 0, false);
     VariableInfo var2("y", 1, true);
     
-    auto id1 = storage.registerVariable(var1, 42);
-    auto id2 = storage.registerVariable(var2, 3.14f);
+    auto id1 = storage.registerVariable(var1, 42LL);
+    auto id2 = storage.registerVariable(var2, 3.14);
     
-    EXPECT_EQ(storage.getValue<int>(id1), 42);
-    EXPECT_FLOAT_EQ(storage.getValue<float>(id2), 3.14f);
+    EXPECT_EQ(storage.getValue<long long>(id1), 42LL);
+    EXPECT_FLOAT_EQ(storage.getValue<double>(id2), 3.14);
     
-    storage.setValue(id1, 100);
-    EXPECT_EQ(storage.getValue<int>(id1), 100);
+    storage.setValue(id1, 100LL);
+    EXPECT_EQ(storage.getValue<long long>(id1), 100LL);
     
-    EXPECT_THROW(storage.setValue(id2, 2.71f), std::runtime_error);
+    EXPECT_THROW(storage.setValue(id2, 2.71), std::runtime_error);
     
-    auto literalId = storage.getIdByLiteral<float>(1, 1.23f);
+    auto literalId = storage.getIdByLiteral<double>(1, 1.23);
     EXPECT_TRUE(storage.getInfo(literalId).isConstant());
-    EXPECT_FLOAT_EQ(storage.getValue<float>(literalId), 1.23f);
+    EXPECT_FLOAT_EQ(storage.getValue<double>(literalId), 1.23);
 }
 
 TEST(FunctionInfoTest, function_info_correct) {
@@ -142,8 +143,8 @@ TEST(FunctionInfoTest, function_info_correct) {
 class FunctionStorageTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        DataType type1("int", 4);
-        DataType type2("float", 4);
+        DataType type1("integer", variant_index<DataValue, long long>());
+        DataType type2("double", variant_index<DataValue, double>());
         typeStorage.registerType(type1);
         typeStorage.registerType(type2);
     }
@@ -154,9 +155,9 @@ protected:
 TEST_F(FunctionStorageTest, can_register_functions) {
     FunctionStorage storage(typeStorage);
     
-    std::vector<DataTypeId> argTypes1 = {0, 0}; // int, int
-    std::vector<DataTypeId> argTypes2 = {0, 1}; // int, float
-    std::vector<DataTypeId> argTypes3 = {1, 1}; // float, float
+    std::vector<DataTypeId> argTypes1 = {0, 0};
+    std::vector<DataTypeId> argTypes2 = {0, 1};
+    std::vector<DataTypeId> argTypes3 = {1, 1};
     
     FunctionInfo func1("add", 0, argTypes1, 1);
     FunctionInfo func2("add", 1, argTypes2, 2);

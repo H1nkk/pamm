@@ -29,11 +29,7 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
             }
             else if (typeName == "string")
             {
-                char* orig = context.variableStorage().getValue<char*>(varId);
-                size_t sz = strlen(orig) + 1;
-                char* nw = new char[sz];
-                strcpy(nw, orig);
-                mStack.push(nw);
+                mStack.push(context.variableStorage().getValue<std::string>(varId));
             }
             else
             {
@@ -84,7 +80,7 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
             {
                 long long r = popValue<long long>(), l = popValue<long long>();
                 if (r == 0)
-                    return "Zero division occurred! Error.";
+                    return std::string("Zero division occurred! Error.");
                 pushValue(l / r);
                 break;
             }
@@ -92,7 +88,7 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
             {
                 long long r = popValue<long long>(), l = popValue<long long>();
                 if (r == 0)
-                    return "Zero division occurred! Error.";
+                    return std::string("Zero division occurred! Error.");
                 pushValue(l % r);
                 break;
             }
@@ -100,7 +96,7 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
             {
                 double r = popValue<double>(), l = popValue<double>();
                 if (r == 0.0)
-                    return "Zero division occurred! Error.";
+                    return std::string("Zero division occurred! Error.");
                 pushValue(l / r);
                 break;
             }

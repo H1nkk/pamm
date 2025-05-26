@@ -23,6 +23,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEAS
 
 set(MP2_LIBRARY "${PROJECT_NAME}")
 set(MP2_APP "app_${PROJECT_NAME}")
+set(MP2_COMPILER_APP "compiler_app_${PROJECT_NAME}")
 set(MP2_TESTS   "test_${PROJECT_NAME}")
 set(MP2_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
@@ -33,6 +34,7 @@ add_subdirectory(src)
 add_subdirectory(libs/googletest)
 add_subdirectory(test)
 add_subdirectory(app)
+add_subdirectory(compiler_app)
 
 # REPORT
 message( STATUS "")

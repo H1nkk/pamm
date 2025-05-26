@@ -3,16 +3,17 @@
 #include "type_storage.h"
 #include "variables_storage.h"
 #include "function_storage.h"
+#include "variant_index.h"
 
 class PostfixInterpreterTest : public ::testing::Test
 {
 protected:
     void SetUp() override
     {
-        execContext.typeStorage().registerType(DataType("integer", sizeof(long long)));
-        execContext.typeStorage().registerType(DataType("double", sizeof(double)));
-        execContext.typeStorage().registerType(DataType("boolean", sizeof(bool)));
-        execContext.typeStorage().registerType(DataType("string", sizeof(char*)));
+        execContext.typeStorage().registerType(DataType("integer", variant_index<DataValue, long long>()));
+        execContext.typeStorage().registerType(DataType("double", variant_index<DataValue, double>()));
+        execContext.typeStorage().registerType(DataType("boolean", variant_index<DataValue, bool>()));
+        execContext.typeStorage().registerType(DataType("string", variant_index<DataValue, std::string>()));
     }
 
     void registerVariable(const std::string& name, const std::string& type, auto value)
@@ -780,7 +781,7 @@ TEST_F(PostfixInterpreterTest, can_work_with_int_boundary_values)
 
 TEST_F(PostfixInterpreterTest, can_load_strings)
 {
-    char str[] = "test";
+    std::string str = "test";
     registerVariable("s", "string", str);
 
     Intr::Program program = {
@@ -790,7 +791,6 @@ TEST_F(PostfixInterpreterTest, can_load_strings)
     auto result = interpreter.execute(program, execContext);
     ASSERT_TRUE(std::holds_alternative<DataValue>(result));
     DataValue val = std::get<DataValue>(result);
-    ASSERT_TRUE(std::holds_alternative<char*>(val));
-    EXPECT_STREQ(std::get<char*>(val), "test");
-    delete[] std::get<char*>(val);
+    ASSERT_TRUE(std::holds_alternative<std::string>(val));
+    EXPECT_EQ(std::get<std::string>(val), "test");
 }

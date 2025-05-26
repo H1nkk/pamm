@@ -16,9 +16,9 @@ class PostfixCompilerTest : public ::testing::Test
 protected:
     void SetUp() override
     {
-        execContext.typeStorage().registerType(DataType("integer", sizeof(long long)));
-        execContext.typeStorage().registerType(DataType("double", sizeof(double)));
-        execContext.typeStorage().registerType(DataType("boolean", sizeof(bool)));
+        execContext.typeStorage().registerType(DataType("integer", variant_index<DataValue, long long>()));
+        execContext.typeStorage().registerType(DataType("double", variant_index<DataValue, double>()));
+        execContext.typeStorage().registerType(DataType("boolean", variant_index<DataValue, bool>()));
 
         registerOperator("$operator+", { "integer", "integer" }, "integer", 1);
         registerOperator("$operator-", { "integer", "integer" }, "integer", 2);

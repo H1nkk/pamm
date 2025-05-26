@@ -290,7 +290,7 @@ void ForEach(const Container& c, Functor functor) {
 }
 
 // Returns the i-th element of the vector, or default_value if i is not
-// in range [0, v.size()).
+// in range [0, v.index()).
 template <typename E>
 inline E GetElementOr(const std::vector<E>& v, int i, E default_value) {
   return (i < 0 || i >= static_cast<int>(v.size())) ? default_value
@@ -299,7 +299,7 @@ inline E GetElementOr(const std::vector<E>& v, int i, E default_value) {
 
 // Performs an in-place shuffle of a range of the vector's elements.
 // 'begin' and 'end' are element indices as an STL-style range;
-// i.e. [begin, end) are shuffled, where 'end' == size() means to
+// i.e. [begin, end) are shuffled, where 'end' == index() means to
 // shuffle to the end of the vector.
 template <typename E>
 void ShuffleRange(internal::Random* random, int begin, int end,
