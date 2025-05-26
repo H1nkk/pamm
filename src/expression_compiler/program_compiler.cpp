@@ -193,6 +193,8 @@ void Compiler::ProgramCompiler::initializeContext()
     DataTypeId doubleId = mContext.typeStorage().registerType(doubleType);
     DataType boolType("boolean", sizeof(bool));
     DataTypeId boolId = mContext.typeStorage().registerType(boolType);
+    DataType stringType("string", sizeof(char*));
+    DataTypeId stringId = mContext.typeStorage().registerType(stringType);
 
     mContext.functionStorage().registerFunction({
         "$operator+", intId, { intId, intId }, Intr::PostfixInterpreter::ADD_INT_INT
@@ -370,6 +372,12 @@ void Compiler::ProgramCompiler::parseVariablesRow()
             mContext.variableStorage().registerVariable<long long>(info, 0LL);
         else if (typeName == "double")
             mContext.variableStorage().registerVariable<double>(info, 0.0);
+        else if (typeName == "string")
+        {
+            char* str = new char[1];
+            str[0] = 0;
+            mContext.variableStorage().registerVariable<char*>(info, str);
+        }
         else
             throw SyntaxError{ curToken().startPos(), "Expected integer or double type" };
     }
@@ -445,7 +453,24 @@ void Compiler::ProgramCompiler::parseConstantsRow()
         {
             throw SyntaxError{ curToken().startPos(), "Too big double" };
         }
-    } else
+    } 
+    else if (isToken(TokenType::STRING))
+    {
+        if (typeName != "string")
+            throw SyntaxError{ curToken().startPos(), "Expected string literal" };
+
+        std::string val = curToken().value();
+        val = val.substr(1, val.size() - 2);
+
+        char* cstr = new char[val.size() + 1];
+        strcpy(cstr, val.c_str());
+
+        DataTypeId type = mContext.typeStorage().getTypeId("string").value();
+        VariableInfo info(name, type, true);
+        mContext.variableStorage().registerVariable(info, cstr);
+        matchToken(TokenType::STRING);
+    }
+    else
     {
         throw SyntaxError{ curToken().startPos(), "Expected integer or double literal" };
     }

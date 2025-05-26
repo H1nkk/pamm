@@ -143,7 +143,8 @@ namespace Compiler {
         TokenType type = token.type();
         if (type != TokenType::ID
             && type != TokenType::INT
-            && type != TokenType::FLOAT)
+            && type != TokenType::FLOAT
+            && type != TokenType::STRING)
             return false;
 
         if (type == TokenType::ID
@@ -177,7 +178,7 @@ namespace Compiler {
         PostfixMember mPrev;
         PostfixMember mCur;
 
-        std::vector<PostfixMember> preprocess(const std::vector<Token> tokens) const
+        std::vector<PostfixMember> preprocess(const std::vector<Token>& tokens) const
         {
             std::vector<PostfixMember> res;
             res.reserve(tokens.size() + 2);
@@ -294,7 +295,21 @@ namespace Compiler {
                 {
                     throw SyntaxError{ token.startPos(), "Too big double" };
                 }
-            } else
+            } else if (token.type() == TokenType::STRING)
+            {
+                std::string val = token.value();
+                val = val.substr(1, val.size() - 2);
+
+                char* cstr = new char[val.size() + 1];
+                strcpy(cstr, val.c_str());
+
+                DataTypeId type = mExecContext.typeStorage().getTypeId("string").value();
+                VariableId id = mExecContext.variableStorage().getIdByLiteral<char*>(type, cstr);
+
+                mOpList.push_back({ Intr::Opcode::LOAD, id });
+                mTypes.push({ type, --mOpList.end() });
+            }
+            else 
             {
                 throw std::runtime_error(__FUNCTION__ ": invalid value type.");
             }
