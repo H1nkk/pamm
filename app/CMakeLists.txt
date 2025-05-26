@@ -34,6 +34,8 @@ if (BUILD_APP_MODULE)
     target_link_libraries(${target} PUBLIC ${MP2_LIBRARY} Qt6::Core Qt6::Gui Qt6::Widgets ${ZLIB_LIBRARIES})
     target_sources(${target} PRIVATE ${RESOURCES})
 
+    add_dependencies(${target} ${MP2_COMPILER_APP})
+
     # Список нужных DLL
     set(QT_DLLS
         "Qt6Cored.dll"

@@ -20,7 +20,7 @@ void WriteNode::execute(ExecutionContext& context)
         auto res = intr.execute(prog, context);
 
         if (std::holds_alternative<std::string>(res))
-            throw res;
+            throw std::get<std::string>(res);
 
         DataValue val = std::get<DataValue>(res);
         if (std::holds_alternative<double>(val))
@@ -73,7 +73,7 @@ void IfNode::execute(ExecutionContext& context)
     auto res = intr.execute(mLogicalExpr, context);
 
     if (std::holds_alternative<std::string>(res))
-        throw res;
+        throw std::get<std::string>(res);
 
     bool val = std::get<bool>(std::get<DataValue>(res));
     
@@ -90,7 +90,7 @@ void AssignNode::execute(ExecutionContext& context)
     auto res = intr.execute(mProg, context);
 
     if (std::holds_alternative<std::string>(res))
-        throw res;
+        throw std::get<std::string>(res);
 
     DataValue val = std::get<DataValue>(res);
     if (std::holds_alternative<double>(val))

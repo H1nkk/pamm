@@ -18,7 +18,7 @@ int main()
     Lexer::Lexer lexer(code);
 
     if (lexer.hasError())
-    {
+    { 
         std::cerr << "SYNTAX_ERROR " << lexer.getAllTokens().back().startPos() << " " <<
             "Invalid token" << std::endl;
         return -1;
@@ -51,7 +51,7 @@ int main()
     {
         Intr::ProgramInterpreter::execute(ctx);
     }
-    catch (const std::string& e)
+    catch (std::string e)
     {
         std::cerr << "RUNTIME_ERROR " << e << std::endl;
         return -1;

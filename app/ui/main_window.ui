@@ -293,7 +293,7 @@
 }</string>
           </property>
           <property name="text">
-           <string>Console:</string>
+           <string>Info:</string>
           </property>
           <property name="margin">
            <number>0</number>

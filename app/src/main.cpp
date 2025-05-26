@@ -32,33 +32,49 @@ using namespace std;
 
 bool firstTime = true;
 Ui::MainWindow ui;
-void consoleEnterHandler(Ui::MainWindow*);
+QString fullErr;
 
-class ConsoleTextEdit : public QTextEdit 
+std::optional<SyntaxError> inputCheck(std::string input)
 {
-    Q_OBJECT
-
-public:
-    using QTextEdit::QTextEdit;
-protected:
-    void keyPressEvent(QKeyEvent* event) override
+    for (int i = 0; i < input.length(); i++)
     {
-        if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return)
-        {
-            consoleEnterHandler(&ui);
-
-            qDebug() << "enter pressed in console";
-            QTextEdit::keyPressEvent(event);
-            return;
-        }
-        QTextEdit::keyPressEvent(event);
+        char ch = input[i];
+        if (ch < -1 || ch > 255) return SyntaxError{ (unsigned long long)i, "Unsupported symbol" };
     }
-};
+    return std::nullopt;
+}
 
-class MyHighlighter : public QSyntaxHighlighter 
+std::vector<size_t> getLineStartIndices(const std::string& text)
+{
+    std::vector<size_t> indices;
+    indices.push_back(0);
+    for (size_t i = 0; i < text.size(); ++i)
+    {
+        if (text[i] == '\n' && i + 1 < text.size())
+        {
+            indices.push_back(i + 1);
+        }
+    }
+    return indices;
+}
+
+std::pair<size_t, size_t> getTextPosition(const std::vector<size_t>& lineStarts, size_t charIndex)
+{
+    auto it = std::upper_bound(lineStarts.begin(), lineStarts.end(), charIndex);
+    if (it == lineStarts.begin())
+    {
+        return { 0, charIndex };
+    }
+
+    size_t lineNumber = static_cast<size_t>(it - lineStarts.begin() - 1);
+    size_t columnNumber = charIndex - lineStarts[lineNumber];
+    return { lineNumber, columnNumber };
+}
+
+class MyHighlighter : public QSyntaxHighlighter
 {
 public:
-    MyHighlighter(QTextDocument* parent = nullptr) : QSyntaxHighlighter(parent) 
+    MyHighlighter(QTextDocument* parent = nullptr) : QSyntaxHighlighter(parent)
     {
         vector<QString> keywords;
 
@@ -97,9 +113,9 @@ public:
 
         keywords.push_back("mod"); color["mod"] = QColor(254, 122, 116);
         keywords.push_back("div"); color["div"] = QColor(254, 122, 116);
-        
+
         // keywords highlighting
-        for (auto keyword : keywords) 
+        for (auto keyword : keywords)
         {
             QTextCharFormat format;
             format.setForeground(color[keyword]);
@@ -121,12 +137,12 @@ public:
     }
 
 protected:
-    void highlightBlock(const QString& text) override 
+    void highlightBlock(const QString& text) override
     {
-        for (const HighlightingRule& rule : qAsConst(highlightingRules)) 
+        for (const HighlightingRule& rule : qAsConst(highlightingRules))
         {
             QRegularExpressionMatchIterator matchIterator = rule.pattern.globalMatch(text);
-            while (matchIterator.hasNext()) 
+            while (matchIterator.hasNext())
             {
                 QRegularExpressionMatch match = matchIterator.next();
                 setFormat(match.capturedStart(), match.capturedLength(), rule.format);
@@ -135,7 +151,7 @@ protected:
     }
 
 private:
-    struct HighlightingRule 
+    struct HighlightingRule
     {
         QRegularExpression pattern;
         QTextCharFormat format;
@@ -144,23 +160,23 @@ private:
     QVector<HighlightingRule> highlightingRules;
 };
 
-void highlightCurrentLine(Ui::MainWindow* ui) 
+void highlightCurrentLine(Ui::MainWindow* ui)
 {
     QPlainTextEdit* editor = ui->textEdit;
     QList<QTextEdit::ExtraSelection> extraSelections;
 
-    if (!editor->isReadOnly()) 
+    if (!editor->isReadOnly())
     {
         QTextEdit::ExtraSelection selection;
 
-        QColor lineColor = QColor(55,55,55);
+        QColor lineColor = QColor(55, 55, 55);
 
         QTextCharFormat format;
         format.setBackground(lineColor);
 
         selection.format = format;
         selection.format.setProperty(QTextFormat::FullWidthSelection, true);
-        if (!editor->textCursor().isNull()) 
+        if (!editor->textCursor().isNull())
         {
             selection.cursor = editor->textCursor();
             selection.cursor.clearSelection();
@@ -171,28 +187,68 @@ void highlightCurrentLine(Ui::MainWindow* ui)
     ui->textEdit->setExtraSelections(extraSelections);
 }
 
-void consoleEnterHandler(Ui::MainWindow* ui) // TODO
-{
-
-}
-
 void run(Ui::MainWindow* ui)
 {
+    ui->consoleContainer->clear();
+
     std::string code = ui->textEdit->toPlainText().toUtf8().constData();
 
+    std::vector<size_t> lineStarts = getLineStartIndices(code);
+
+    auto checkRes = inputCheck(code);
+    if (checkRes.has_value())
+    {
+        auto pos = getTextPosition(lineStarts, checkRes.value().pos);
+        ui->consoleContainer->insertPlainText(
+            QString::fromStdString("Invalid symbol at pos ("
+                + to_string(pos.first + 1) + ":" + to_string(pos.second + 1) + ")")
+        );
+        return;
+    }
+
+
     QProcess* process = new QProcess();
+    fullErr.clear();
 
     QProcess::connect(process, &QProcess::readyReadStandardError, [=]()
         {
-            QString err = process->readAllStandardError();
-            ui->consoleContainer->insertPlainText(err);
+            fullErr.push_back(process->readAllStandardError());
         });
 
     QProcess::connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
         [=](int code, QProcess::ExitStatus status)
         {
+            stringstream fullSS(fullErr.toUtf8().constData());
+
+            std::string err;
+            while (std::getline(fullSS, err))
+            {
+                stringstream ss(err);
+
+                std::string errCode;
+                ss >> errCode;
+
+                if (errCode == "SYNTAX_ERROR")
+                {
+                    size_t pos; ss >> pos;
+                    auto pos2d = getTextPosition(lineStarts, pos);
+
+                    std::string rest;
+                    std::getline(ss, rest);
+                    std::string msg = "Syntax error at (" + to_string(pos2d.first + 1) + ":"
+                        + to_string(pos2d.second + 1) + "): " + rest;
+                    ui->consoleContainer->insertPlainText(QString::fromStdString(msg));
+                } else
+                {
+                    ui->consoleContainer->insertPlainText(QString::fromStdString(err));
+                }
+            }
+
             qDebug() << "Process finished with code:" << code;
         });
+
+    QProcess::connect(process, QOverload<int, QProcess::ExitStatus>::of(&QProcess::finished),
+        process, &QProcess::deleteLater);
 
     process->setProcessChannelMode(QProcess::ProcessChannelMode::SeparateChannels);
     process->start("compiler_app_pamm.exe");
@@ -200,21 +256,21 @@ void run(Ui::MainWindow* ui)
     process->closeWriteChannel();
 }
 
-void changeRowScrollBar(Ui::MainWindow* ui) 
+void changeRowScrollBar(Ui::MainWindow* ui)
 {
     ui->rowNumbersContainer->verticalScrollBar()->setValue(ui->textEdit->verticalScrollBar()->value());
 }
 
-void changeMainTextScrollBar(Ui::MainWindow* ui) 
+void changeMainTextScrollBar(Ui::MainWindow* ui)
 {
     ui->textEdit->verticalScrollBar()->setValue(ui->rowNumbersContainer->verticalScrollBar()->value());
 }
 
-void refreshRowNumbers(Ui::MainWindow* ui) 
+void refreshRowNumbers(Ui::MainWindow* ui)
 {
     int rows = ui->textEdit->toPlainText().count("\n") + 1;
     QString result;
-    for (int i = 1; i <= rows; i++) 
+    for (int i = 1; i <= rows; i++)
     {
         result += to_string(i);
         if (i != rows)
@@ -223,11 +279,11 @@ void refreshRowNumbers(Ui::MainWindow* ui)
     ui->rowNumbersContainer->setPlainText(result);
 }
 
-bool saveExisting(Ui::MainWindow* ui, const QString& curFilename) 
+bool saveExisting(Ui::MainWindow* ui, const QString& curFilename)
 {
     QFile file(curFilename);
 
-    if (!file.open(QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate)) 
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate))
     {
         qDebug() << "Something went wrong during file saving";
         return false;
@@ -242,11 +298,11 @@ bool saveExisting(Ui::MainWindow* ui, const QString& curFilename)
     return true;
 }
 
-bool saveNew(Ui::MainWindow* ui, QString& curFilename) 
+bool saveNew(Ui::MainWindow* ui, QString& curFilename)
 {
     QString filename = QFileDialog::getSaveFileName(nullptr, "Choose file to save", "Unnamed.txt", "Text files (*.txt)");
 
-    if (filename.isEmpty()) 
+    if (filename.isEmpty())
     {
         qDebug() << "No file was chosen";
         return false;
@@ -254,7 +310,7 @@ bool saveNew(Ui::MainWindow* ui, QString& curFilename)
 
     QFile file(filename);
 
-    if (!file.open(QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate)) 
+    if (!file.open(QIODevice::ReadWrite | QIODevice::Text | QIODevice::Truncate))
     {
         qDebug() << "Something went wrong during file saving";
         return false;
@@ -272,13 +328,13 @@ bool saveNew(Ui::MainWindow* ui, QString& curFilename)
     return true;
 }
 
-bool onOpenButtonClicked(Ui::MainWindow* ui, QString& curFilename) 
+bool onOpenButtonClicked(Ui::MainWindow* ui, QString& curFilename)
 {
     QString fileContent;
 
     QString filename = QFileDialog::getOpenFileName(nullptr, "Choose file to open", QString(), "Text files (*.txt)");
 
-    if (filename.isEmpty()) 
+    if (filename.isEmpty())
     {
         qDebug() << "No file was chosen";
         return false;
@@ -303,7 +359,7 @@ bool onOpenButtonClicked(Ui::MainWindow* ui, QString& curFilename)
     return true;
 }
 
-bool onSaveButtonClicked(Ui::MainWindow* ui, QString& curFilename) 
+bool onSaveButtonClicked(Ui::MainWindow* ui, QString& curFilename)
 {
 
     if (firstTime)
@@ -320,93 +376,78 @@ int main(int argc, char* argv[])
     ui.setupUi(&window);
 
     // change console container to custom one
-    QWidget* oldConsole = ui.consoleContainer;
-    QWidget* parent = oldConsole->parentWidget();
-    oldConsole->hide();
-    oldConsole->deleteLater();
-    ConsoleTextEdit* customConsole = new ConsoleTextEdit(parent);
-    customConsole->setObjectName("consoleContainer");
-    QLayout* layout = parent->layout();
-    if (layout)
-    {
-        layout->addWidget(customConsole);
-    }
-    ui.consoleContainer = customConsole;
+    ui.consoleContainer->setReadOnly(true);
     // end of changing console container to custom one
 
     QString currentFilename;
     QPlainTextEdit* editor = ui.textEdit;
     new MyHighlighter(editor->document());
 
-    QObject::connect(ui.actionOpen, &QAction::triggered, [&]() 
+    QObject::connect(ui.actionOpen, &QAction::triggered, [&]()
         {
-        if (onOpenButtonClicked(&ui, currentFilename)) 
-        {
-            qDebug() << currentFilename << "has been opened";
+            if (onOpenButtonClicked(&ui, currentFilename))
+            {
+                qDebug() << currentFilename << "has been opened";
 
-            firstTime = false;
-        }
+                firstTime = false;
+            }
 
-        refreshRowNumbers(&ui);
+            refreshRowNumbers(&ui);
         });
 
-    QObject::connect(ui.actionSave, &QAction::triggered, [&]() 
+    QObject::connect(ui.actionSave, &QAction::triggered, [&]()
         {
-        if (onSaveButtonClicked(&ui, currentFilename)) 
-        {
-            qDebug() << currentFilename << "has been saved";
+            if (onSaveButtonClicked(&ui, currentFilename))
+            {
+                qDebug() << currentFilename << "has been saved";
 
-            firstTime = false;
-        }
+                firstTime = false;
+            }
 
-        refreshRowNumbers(&ui);
+            refreshRowNumbers(&ui);
         });
 
-    QObject::connect(ui.actionSave_as, &QAction::triggered, [&]() 
+    QObject::connect(ui.actionSave_as, &QAction::triggered, [&]()
         {
-        if (saveNew(&ui, currentFilename)) 
-        {
-            qDebug() << currentFilename << "has been saved";
+            if (saveNew(&ui, currentFilename))
+            {
+                qDebug() << currentFilename << "has been saved";
 
-            firstTime = false;
-        }
+                firstTime = false;
+            }
 
-        refreshRowNumbers(&ui);
+            refreshRowNumbers(&ui);
         });
 
-    QObject::connect(ui.runButton, &QPushButton::clicked, [&]() 
+    QObject::connect(ui.runButton, &QPushButton::clicked, [&]()
         {
-        run(&ui);
+            run(&ui);
         });
 
-    QObject::connect(ui.fileNameContainer, &QLineEdit::textChanged, [&]() 
+    QObject::connect(ui.fileNameContainer, &QLineEdit::textChanged, [&]()
         {
-        ui.fileNameContainer->setToolTip(ui.fileNameContainer->text());
+            ui.fileNameContainer->setToolTip(ui.fileNameContainer->text());
         });
 
-    QObject::connect(ui.textEdit, &QPlainTextEdit::textChanged, [&]() 
+    QObject::connect(ui.textEdit, &QPlainTextEdit::textChanged, [&]()
         {
-        refreshRowNumbers(&ui);
+            refreshRowNumbers(&ui);
         });
 
-    QObject::connect(ui.textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [&]() 
+    QObject::connect(ui.textEdit->verticalScrollBar(), &QScrollBar::valueChanged, [&]()
         {
-        changeRowScrollBar(&ui);
+            changeRowScrollBar(&ui);
         });
 
-    QObject::connect(ui.rowNumbersContainer->verticalScrollBar(), &QScrollBar::valueChanged, [&]() 
+    QObject::connect(ui.rowNumbersContainer->verticalScrollBar(), &QScrollBar::valueChanged, [&]()
         {
-        changeMainTextScrollBar(&ui);
+            changeMainTextScrollBar(&ui);
         });
-
-    //QObject::connect(ui.textEdit, &QPlainTextEdit::cursorPositionChanged, [&]() { // CRASHES
-    //    highlightCurrentLine(&ui);
-    //    });
 
     ui.actionSave->setShortcut(QKeySequence("Ctrl+S"));
     ui.actionOpen->setShortcut(QKeySequence("Ctrl+O"));
     ui.actionSave_as->setShortcut(QKeySequence("Ctrl+Shift+S"));
-    
+
     window.show();
     return app.exec();
 }

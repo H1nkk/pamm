@@ -237,7 +237,7 @@ namespace Compiler {
 
                 for (size_t j = 0; j < typeCasts[i].size(); j++)
                 {
-                    mOpList.insert(insertIter, { Intr::Opcode::CALL, typeCasts[i][j] });
+                    insertIter = mOpList.insert(insertIter, { Intr::Opcode::CALL, typeCasts[i][j] });
                     ++insertIter;
                 }
             }
