@@ -43,17 +43,17 @@ var
     Res, d: double;
 begin
     num1 := 5;
-    Write('Введите четное целое число: ');
+    Write('Enter even integer value: ');
     Read(num2);
-    Write('Введите вещественное число: ');
-	Read(d);
-    if (d mod 2 = 0) then
+    Write('Enter floating point value: ');
+    Read(d);
+    if (num2 mod 2 = 0) then
     begin
         Res := (num1 - num2 * 5 div 2) / (d * 2);
-        Write('Результат = ', Res);
+        Write('Result = ', Res);
     end
     else
-        Write('Неверный ввод');
+        Write('Invalid input');
 end.
 
 ```
