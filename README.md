@@ -61,38 +61,32 @@ end.
 ### Пример 2
 
 ```pascal
-program Example2;
-const
-    e : double = 2.71828;
+program calc;
 var
-    opcode, operand1, operand2, Res: integer;
-    foo1, foo2: double;
+    op : integer;
+    a, b : double;
 begin
-    WriteLn('*** Программа-калькулятор ***');
-    Write('Введите "1" для сложения, "2" для вычитания: ');
-    Read(opcode);
-    if (opcode <> 1) and (opcode <> 2) then 
-      begin
-        Write('Неверный ввод');
-      end
-    else
-      begin
-        Write('Введите первый операнд: ');
-    	  Read(operand1);
-    	  Write('Введите второй операнд: ');
-    	  Read(operand2);
-        if (opcode = 1) then
-          begin
-            Res := operand1 + operand2;
-            Write('Результат = ', Res);
-         end
-        else
-          if (opcode = 2) then
-            begin
-              Res := operand1 - operand2;
-              Write('Результат = ', Res);
-          end
-      end       
+    WriteLn('Welcome to calculator!');
+
+    Write('Please, enter first argument: ');
+    Read(a);
+
+    Write('Please, enter second argument: ');
+    Read(b);
+
+    WriteLn('Please, choose operation');
+    WriteLn('1. Add');
+    WriteLn('2. Subtract');
+    WriteLn('3. Divide'); 
+    WriteLn('4. Multiply');
+    Write('Your choice: ');
+    Read(op);
+
+    if (op = 1) then WriteLn(a+b);
+    else if(op = 2) then WriteLn(a-b);
+    else if(op = 3) then WriteLn(a/b);
+    else if(op = 4) then WriteLn(a*b);
+    else WriteLn('Invalid choice:(');
 end.
 ```
 
