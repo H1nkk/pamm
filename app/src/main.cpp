@@ -23,6 +23,7 @@
 #include <QMetaType>
 #include "ui_main_window.h"
 #include "table.h"
+#include "execution_driver.h"
 
 
 using namespace std;
@@ -175,7 +176,20 @@ void consoleEnterHandler(Ui::MainWindow* ui) // TODO
 
 void run(Ui::MainWindow* ui) // TODO
 {
+    std::string str = ui->textEdit->toPlainText().toUtf8().constData();
 
+    ExecutionDriver driver;
+    auto res = driver.execute(str);
+
+    if (std::holds_alternative<SyntaxError>(res))
+    {
+        // hightlignt error
+        std::cout << "Syntax error:" << std::get<SyntaxError>(res).message << std::endl;
+    }
+    else if (std::holds_alternative<std::string>(res))
+    {
+        std::cout << "Runtime error: " << std::get<std::string>(res) << std::endl;
+    }
 }
 
 void changeRowScrollBar(Ui::MainWindow* ui) 

@@ -33,7 +33,7 @@ public:
     virtual ~ExecutionNode() = 0 {}
 };
 
-class BlockNode : public ExecutionNode {
+class BlockNode final : public ExecutionNode {
 public:
     BlockNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild)
         : ExecutionNode(pNext, pChild) {}
@@ -42,7 +42,7 @@ public:
     virtual ~BlockNode() {}
 };
 
-class WriteNode : public ExecutionNode {
+class WriteNode final : public ExecutionNode {
 private:
     std::vector<Intr::Program> mArgs;
     bool mAddNewLine;
@@ -54,7 +54,7 @@ public:
     virtual ~WriteNode() {}
 };
 
-class ReadNode : public ExecutionNode {
+class ReadNode final : public ExecutionNode {
 private:
     VariableId mId;
 public:
@@ -64,7 +64,7 @@ public:
     virtual ~ReadNode() {}
 };
 
-class AssignNode : public ExecutionNode {
+class AssignNode final : public ExecutionNode {
 private:
     VariableId mId;
     Intr::Program mProg;
@@ -76,7 +76,7 @@ public:
     virtual ~AssignNode() {}
 };
 
-class IfNode : public ExecutionNode {
+class IfNode final : public ExecutionNode {
 private:
     Intr::Program mLogicalExpr;
 public:

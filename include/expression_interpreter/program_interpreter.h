@@ -5,6 +5,7 @@ namespace Intr
 {
     class ProgramInterpreter final
     {
-        static void execute(const ExecutionContext& context);
+    public:
+        static void execute(ExecutionContext& context);
     };
 }
