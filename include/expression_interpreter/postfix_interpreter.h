@@ -29,6 +29,7 @@ namespace Intr {
         {
             ADD_INT_INT = 0,
             ADD_DOUBLE_DOUBLE,
+            ADD_STRING_STRING,
             SUB_INT_INT,
             SUB_DOUBLE_DOUBLE,
             MULT_INT_INT,
@@ -70,6 +71,10 @@ namespace Intr {
             FLOOR_DOUBLE,
             CEIL_DOUBLE,
             ROUND_DOUBLE,
+
+            TO_STRING_INT,
+            TO_STRING_DOUBLE,
+            TO_STRING_BOOL
         };
 
         /// @brief Выполнить программу, сгенерированную парсером

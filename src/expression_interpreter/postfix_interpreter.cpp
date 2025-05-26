@@ -52,6 +52,11 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
                 pushValue(popValue<double>() + popValue<double>());
                 break;
             }
+            case ADD_STRING_STRING:
+            {
+                pushValue(popValue<std::string>() + popValue<std::string>());
+                break;
+            }
             case SUB_INT_INT:
             {
                 long long r = popValue<long long>(), l = popValue<long long>();
@@ -254,6 +259,21 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
             case ROUND_DOUBLE:
             {
                 pushValue(static_cast<long long>(round(popValue<double>())));
+                break;
+            }
+            case TO_STRING_INT:
+            {
+                pushValue(std::to_string(popValue<long long>()));
+                break;
+            }
+            case TO_STRING_DOUBLE:
+            {
+                pushValue(std::to_string(popValue<double>()));
+                break;
+            }
+            case TO_STRING_BOOL:
+            {
+                pushValue(std::to_string(popValue<bool>()));
                 break;
             }
             default:

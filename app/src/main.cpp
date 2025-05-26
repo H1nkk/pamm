@@ -95,6 +95,8 @@ public:
 
         keywords.push_back("double"); color["double"] = QColor(84, 135, 166);
         keywords.push_back("integer"); color["integer"] = QColor(84, 135, 166);
+        keywords.push_back("string"); color["string"] = QColor(84, 135, 166);
+        keywords.push_back("boolean"); color["boolean"] = QColor(84, 135, 166);
 
         keywords.push_back("program"); color["program"] = QColor(202, 39, 57);
 
@@ -106,6 +108,14 @@ public:
         keywords.push_back("Write"); color["Write"] = QColor(221, 221, 170);
         keywords.push_back("WriteLn"); color["WriteLn"] = QColor(221, 221, 170);
         keywords.push_back("Read"); color["Read"] = QColor(221, 221, 170);
+        keywords.push_back("abs"); color["abs"] = QColor(221, 221, 170);
+        keywords.push_back("sin"); color["sin"] = QColor(221, 221, 170);
+        keywords.push_back("cos"); color["cos"] = QColor(221, 221, 170);
+        keywords.push_back("exp"); color["exp"] = QColor(221, 221, 170);
+        keywords.push_back("round"); color["round"] = QColor(221, 221, 170);
+        keywords.push_back("floor"); color["floor"] = QColor(221, 221, 170);
+        keywords.push_back("ceil"); color["ceil"] = QColor(221, 221, 170);
+        keywords.push_back("toString"); color["toString"] = QColor(221, 221, 170);
 
         keywords.push_back("and"); color["and"] = QColor(37, 99, 187);
         keywords.push_back("or"); color["or"] = QColor(37, 99, 187);

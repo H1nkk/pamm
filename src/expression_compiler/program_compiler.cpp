@@ -198,6 +198,9 @@ void Compiler::ProgramCompiler::initializeContext()
     DataTypeId stringId = mContext.typeStorage().registerType(stringType);
 
     mContext.functionStorage().registerFunction({
+        "$operator+", stringId, { stringId, stringId}, Intr::PostfixInterpreter::ADD_STRING_STRING
+        });
+    mContext.functionStorage().registerFunction({
         "$operator+", intId, { intId, intId }, Intr::PostfixInterpreter::ADD_INT_INT
         });
     mContext.functionStorage().registerFunction({
@@ -313,6 +316,15 @@ void Compiler::ProgramCompiler::initializeContext()
     mContext.functionStorage().registerFunction({
         "round", intId, { doubleId }, Intr::PostfixInterpreter::ROUND_DOUBLE
         });
+    mContext.functionStorage().registerFunction({
+        "toString", stringId, { intId }, Intr::PostfixInterpreter::TO_STRING_INT
+        });
+    mContext.functionStorage().registerFunction({
+        "toString", stringId, { doubleId }, Intr::PostfixInterpreter::TO_STRING_DOUBLE
+        });
+    mContext.functionStorage().registerFunction({
+        "toString", stringId, { boolId }, Intr::PostfixInterpreter::TO_STRING_BOOL
+        });
 }
 
 void Compiler::ProgramCompiler::parseVariables()
@@ -376,7 +388,7 @@ void Compiler::ProgramCompiler::parseVariablesRow()
         else if (typeName == "string")
             mContext.variableStorage().registerVariable<std::string>(info, "");
         else
-            throw SyntaxError{ curToken().startPos(), "Expected integer or double type" };
+            throw SyntaxError{ curToken().startPos(), "Expected integer, double or string type" };
     }
 }
 
@@ -466,7 +478,7 @@ void Compiler::ProgramCompiler::parseConstantsRow()
     }
     else
     {
-        throw SyntaxError{ curToken().startPos(), "Expected integer or double literal" };
+        throw SyntaxError{ curToken().startPos(), "Expected integer, double or string literal" };
     }
 
     matchToken(TokenType::SEMICOLON);

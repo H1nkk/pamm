@@ -43,6 +43,7 @@ int main()
     FILE* fp;
     freopen_s(&fp, "CONIN$", "r", stdin);
     freopen_s(&fp, "CONOUT$", "w", stdout);
+    std::cin >> std::skipws;
     std::cout.clear();
     std::cin.clear();
     std::ios_base::sync_with_stdio();
