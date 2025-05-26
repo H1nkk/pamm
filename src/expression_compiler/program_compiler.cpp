@@ -118,7 +118,15 @@ std::shared_ptr<ExecutionNode> Compiler::ProgramCompiler::parseStatement()
         matchToken(TokenType::IF);
         matchToken(TokenType::LPAREN);
         
+        auto compRes = compileExpression();
+        DataTypeId retType = compRes.resultType;
+        std::string retTypeName = mContext.typeStorage().getTypeInfo(retType).value().name();
+        if (retTypeName != "boolean")
+            throw SyntaxError{ curToken().startPos(), "Expected expression return type is boolean, but it is " + retTypeName };
+
         // compile logical expression
+        
+        std::shared_ptr<PostfixNode> logicalExpr = std::make_shared<PostfixNode>(nullptr, nullptr, compRes.program);
 
         matchToken(TokenType::RPAREN);
 
@@ -137,7 +145,7 @@ std::shared_ptr<ExecutionNode> Compiler::ProgramCompiler::parseStatement()
 
         ifClause->setNext(elseClause);
 
-        //return std::make_shared<IfNode>(nullptr, ifClause, ???);
+        return std::make_shared<IfNode>(nullptr, ifClause, logicalExpr);
     }
 
     throw SyntaxError{ curToken().startPos(), "Expected statement" };
@@ -409,4 +417,50 @@ void Compiler::ProgramCompiler::parseConstantsRow()
     }
 
     matchToken(TokenType::SEMICOLON);
+}
+
+Compiler::PostfixCompilationResult Compiler::ProgramCompiler::compileExpression()
+{
+    size_t closingPos = findClosingTokenPosition();
+    std::vector<Token> logicalExpr(mTokens.begin() + mCurrentPosition, mTokens.begin() + closingPos);
+    logicalExpr.push_back(Token(TokenType::END, "", closingPos, closingPos));
+    auto compRes = mPostfixCompiler.compileExpression(logicalExpr);
+    if (std::holds_alternative<SyntaxError>(compRes))
+        throw std::get<SyntaxError>(compRes);
+
+    mCurrentPosition = closingPos;
+    return std::get<PostfixCompilationResult>(compRes);
+}
+
+size_t Compiler::ProgramCompiler::findClosingTokenPosition() const
+{
+    size_t pos = mCurrentPosition;
+    int parenCount = 0;
+    int blockCount = 0;
+
+    for (; pos < mTokens.size(); pos++)
+    {
+        TokenType curType = mTokens[pos].type();
+        if (curType == TokenType::ENDOFFILE ||
+            curType == TokenType::INVALID)
+            return pos;
+
+        else if (curType == TokenType::LPAREN)
+            parenCount++;
+        else if (curType == TokenType::BEGIN)
+            blockCount++;
+        else if (curType == TokenType::RPAREN)
+            parenCount--;
+        else if (curType == TokenType::END)
+            blockCount--;
+
+        if (parenCount == 0 && blockCount == 0
+            && (curType == TokenType::COMMA
+                || curType == TokenType::SEMICOLON
+                || curType == TokenType::END
+                || curType == TokenType::RPAREN))
+            return pos;
+    }
+
+    return pos;
 }

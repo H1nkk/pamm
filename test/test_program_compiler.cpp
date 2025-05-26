@@ -154,15 +154,50 @@ TEST(ProgramCompilerTest, cant_compile_write_with_no_parameters) {
 }
 
 TEST(ProgramCompilerTest, can_compile_read) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_read_with_no_params) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "Read();\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_read_with_more_than_one_parameter) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "Read(a, b);\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_assign) {
