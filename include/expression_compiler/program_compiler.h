@@ -5,6 +5,7 @@
 #include "lexer/lexer_token.h"
 #include "expression_compiler/postfix_compiler.h"
 #include "expression_interpreter/execution_context.h"
+#include "execution_node.h"
 #include "expression_interpreter/operation.h"
 #include "syntax_error.h"
 

@@ -2,10 +2,9 @@
 #include <vector>
 #include <memory>
 #include "lexer/lexer_token.h"
+#include "expression_interpreter/execution_context.h"
 #include "expression_interpreter/operation.h"
 #include "variables_storage.h"
-
-struct ExecutionContext;
 
 class ExecutionNode {
 private:
@@ -43,25 +42,13 @@ public:
     virtual ~BlockNode() {}
 };
 
-class PostfixNode : public ExecutionNode
-{
-private:
-    Intr::Program mProgram;
-public:
-    PostfixNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild,
-        const Intr::Program& program)
-        : ExecutionNode(pNext, pChild), mProgram(program) {}
-
-    virtual void execute(ExecutionContext& context) override;
-    virtual ~PostfixNode() {}
-};
-
 class WriteNode : public ExecutionNode {
 private:
-    std::vector<Lexer::Token> mArgs;
+    std::vector<Intr::Program> mArgs;
+    bool mAddNewLine;
 public:
-    WriteNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const std::vector<Lexer::Token>& args)
-        : ExecutionNode(pNext, pChild), mArgs(args) {}
+    WriteNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const std::vector<Intr::Program>& args, bool addNewLine)
+        : ExecutionNode(pNext, pChild), mArgs(args), mAddNewLine(addNewLine) {}
 
     virtual void execute(ExecutionContext& context) override;
     virtual ~WriteNode() {}
@@ -79,11 +66,11 @@ public:
 
 class AssignNode : public ExecutionNode {
 private:
-    Lexer::Token mName;
+    VariableId mId;
     Intr::Program mProg;
 public:
-    AssignNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, const Lexer::Token& name, const Intr::Program& prog) 
-        : ExecutionNode(pNext, pChild), mName(name), mProg(prog) {}
+    AssignNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild, VariableId id, const Intr::Program& prog) 
+        : ExecutionNode(pNext, pChild), mId(id), mProg(prog) {}
 
     virtual void execute(ExecutionContext& context) override;
     virtual ~AssignNode() {}
@@ -91,10 +78,10 @@ public:
 
 class IfNode : public ExecutionNode {
 private:
-    std::shared_ptr<PostfixNode> mLogicalExpr;
+    Intr::Program mLogicalExpr;
 public:
     IfNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild,
-        const std::shared_ptr<PostfixNode>& logicalExpr) 
+        const Intr::Program& logicalExpr) 
         : ExecutionNode(pNext, pChild), mLogicalExpr(logicalExpr) {}
 
     virtual void execute(ExecutionContext& context) override;

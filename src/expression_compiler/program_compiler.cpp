@@ -47,7 +47,7 @@ std::variant<ExecutionContext, SyntaxError> Compiler::ProgramCompiler::compilePr
 std::shared_ptr<BlockNode> Compiler::ProgramCompiler::parseCodeBlock()
 {
     matchToken(TokenType::BEGIN);
-    
+
     std::shared_ptr<ExecutionNode> start = nullptr;
     std::shared_ptr<ExecutionNode> prev = nullptr;
 
@@ -59,8 +59,7 @@ std::shared_ptr<BlockNode> Compiler::ProgramCompiler::parseCodeBlock()
         {
             start = node;
             prev = node;
-        }
-        else
+        } else
         {
             prev->setNext(node);
             prev = node;
@@ -104,48 +103,83 @@ std::shared_ptr<ExecutionNode> Compiler::ProgramCompiler::parseStatement()
 
     if (isToken(TokenType::WRITE) || isToken(TokenType::WRITELN))
     {
+        bool addNewLine = isToken(TokenType::WRITELN);
 
+        if (isToken(TokenType::WRITE)) matchToken(TokenType::WRITE);
+        else matchToken(TokenType::WRITELN);
+
+        matchToken(TokenType::LPAREN);
+
+        if (isToken(TokenType::RPAREN))
+            throw SyntaxError{ curToken().startPos(), "Expected at least one argument" };
+
+        std::vector<Intr::Program> argumentPrograms;
+
+        argumentPrograms.push_back(compileExpression().program);
+        while (isToken(TokenType::COMMA))
+        {
+            matchToken(TokenType::COMMA);
+            argumentPrograms.push_back(compileExpression().program);
+        }
+
+        matchToken(TokenType::RPAREN);
+        matchToken(TokenType::SEMICOLON);
+
+        return std::make_shared<WriteNode>(nullptr, nullptr, argumentPrograms, addNewLine);
     }
 
     if (isToken(TokenType::ID))
     {
-        // think what to do with read write writeln
+        std::string name = curToken().value();
+        if (!isVariableName(name))
+            throw SyntaxError{ curToken().startPos(), "Expected variable name" };
 
+        matchToken(TokenType::ID);
+        matchToken(TokenType::ASSIGN);
+
+        auto compRes = compileExpression();
+        DataTypeId retType = compRes.resultType;
+        VariableId varId = mContext.variableStorage().getId(name).value();
+        DataTypeId targetType = mContext.variableStorage().getInfo(varId).type();
+
+        if (retType != targetType)
+        {
+            throw SyntaxError{ curToken().startPos(), "Expected expression of type " +
+                mContext.typeStorage().getTypeInfo(targetType).value().name() + " but got " +
+                mContext.typeStorage().getTypeInfo(retType).value().name() };
+        }
+
+        matchToken(TokenType::SEMICOLON);
+
+        return std::make_shared<AssignNode>(nullptr, nullptr, varId, compRes.program);
     }
 
     if (isToken(TokenType::IF))
     {
         matchToken(TokenType::IF);
         matchToken(TokenType::LPAREN);
-        
+
         auto compRes = compileExpression();
         DataTypeId retType = compRes.resultType;
         std::string retTypeName = mContext.typeStorage().getTypeInfo(retType).value().name();
         if (retTypeName != "boolean")
             throw SyntaxError{ curToken().startPos(), "Expected expression return type is boolean, but it is " + retTypeName };
 
-        // compile logical expression
-        
-        std::shared_ptr<PostfixNode> logicalExpr = std::make_shared<PostfixNode>(nullptr, nullptr, compRes.program);
-
         matchToken(TokenType::RPAREN);
+        matchToken(TokenType::THEN);
 
-        std::shared_ptr<ExecutionNode> ifClause = nullptr;
+        std::shared_ptr<ExecutionNode> ifClause = parseStatement();
         std::shared_ptr<ExecutionNode> elseClause = nullptr;
-
-        if (isToken(TokenType::BEGIN)) ifClause = parseCodeBlock();
-        else ifClause = parseStatement();
 
         if (isToken(TokenType::ELSE))
         {
             matchToken(TokenType::ELSE);
-            if (isToken(TokenType::BEGIN)) elseClause = parseCodeBlock();
-            else elseClause = parseStatement();
+            elseClause = parseStatement();
         }
 
         ifClause->setNext(elseClause);
 
-        return std::make_shared<IfNode>(nullptr, ifClause, logicalExpr);
+        return std::make_shared<IfNode>(nullptr, ifClause, compRes.program);
     }
 
     throw SyntaxError{ curToken().startPos(), "Expected statement" };
@@ -237,7 +271,7 @@ void Compiler::ProgramCompiler::initializeContext()
     mContext.functionStorage().registerFunction({
         "$operator<>", boolId, { boolId, boolId }, Intr::PostfixInterpreter::NOTEQUAL_BOOL
         });
-    
+
     mContext.functionStorage().registerFunction({
         "$operatorand", boolId, { boolId, boolId }, Intr::PostfixInterpreter::AND_BOOL_BOOL
         });
@@ -247,7 +281,7 @@ void Compiler::ProgramCompiler::initializeContext()
     mContext.functionStorage().registerFunction({
         "$operatornot", boolId, { boolId }, Intr::PostfixInterpreter::NOT_BOOL
         });
-    
+
     mContext.functionStorage().registerFunction({
         "$cast", doubleId, { intId }, Intr::PostfixInterpreter::CAST_INT_DOUBLE
         });
@@ -422,9 +456,9 @@ void Compiler::ProgramCompiler::parseConstantsRow()
 Compiler::PostfixCompilationResult Compiler::ProgramCompiler::compileExpression()
 {
     size_t closingPos = findClosingTokenPosition();
-    std::vector<Token> logicalExpr(mTokens.begin() + mCurrentPosition, mTokens.begin() + closingPos);
-    logicalExpr.push_back(Token(TokenType::END, "", closingPos, closingPos));
-    auto compRes = mPostfixCompiler.compileExpression(logicalExpr);
+    std::vector<Token> expr(mTokens.begin() + mCurrentPosition, mTokens.begin() + closingPos);
+    expr.push_back(Token(TokenType::ENDOFFILE, "", closingPos, closingPos));
+    auto compRes = mPostfixCompiler.compileExpression(expr);
     if (std::holds_alternative<SyntaxError>(compRes))
         throw std::get<SyntaxError>(compRes);
 
@@ -445,6 +479,12 @@ size_t Compiler::ProgramCompiler::findClosingTokenPosition() const
             curType == TokenType::INVALID)
             return pos;
 
+        else if (parenCount == 0 && blockCount == 0
+            && (curType == TokenType::COMMA
+                || curType == TokenType::SEMICOLON
+                || curType == TokenType::END
+                || curType == TokenType::RPAREN))
+            return pos;
         else if (curType == TokenType::LPAREN)
             parenCount++;
         else if (curType == TokenType::BEGIN)
@@ -454,12 +494,6 @@ size_t Compiler::ProgramCompiler::findClosingTokenPosition() const
         else if (curType == TokenType::END)
             blockCount--;
 
-        if (parenCount == 0 && blockCount == 0
-            && (curType == TokenType::COMMA
-                || curType == TokenType::SEMICOLON
-                || curType == TokenType::END
-                || curType == TokenType::RPAREN))
-            return pos;
     }
 
     return pos;

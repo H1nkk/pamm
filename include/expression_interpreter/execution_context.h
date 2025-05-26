@@ -4,7 +4,8 @@
 #include "type_storage.h"
 #include "variables_storage.h"
 #include "function_storage.h"
-#include "execution_node.h"
+
+class BlockNode;
 
 class ExecutionContext final {
 private:

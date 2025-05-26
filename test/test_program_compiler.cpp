@@ -138,19 +138,76 @@ TEST(ProgramCompilerTest, cant_compile_if_have_vars_and_consts_with_same_name) {
 }
 
 TEST(ProgramCompilerTest, cant_compile_then_using_unknown_var_or_const) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, piu, baa: double;\n"
+        "begin\n"
+        "a := pop;"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_write) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, piu, baa: double;\n"
+        "begin\n"
+        "a := 10; foo := 1.0; piu := 2.0; baa := 3.0;\n"
+        "Write(a);\n"
+        "WriteLn(pi);\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, write_supports_many_parameters) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, piu, baa: double;\n"
+        "begin\n"
+        "a := 10; foo := 1.0; piu := 2.0; baa := 3.0;\n"
+        "Write(a, foo, piu, pi);\n"
+        "WriteLn(a, foo, piu, pi);\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_write_with_no_parameters) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "foo, piu, baa: double;\n"
+        "begin\n"
+        "a := 10; foo := 1.0; piu := 2.0; baa := 3.0;\n"
+        "Write();\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_read) {
@@ -201,29 +258,123 @@ TEST(ProgramCompilerTest, cant_compile_read_with_more_than_one_parameter) {
 }
 
 TEST(ProgramCompilerTest, can_compile_assign) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10 + 15 * (a + a);\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_assign_without_right_part) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := ;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_if) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "if (a < 20) then a:=20;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, can_compile_if_else) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "if (a < 20) then a:=20;\n"
+        "else a:=10;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
 
 TEST(ProgramCompilerTest, cant_compile_if_without_condition) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "if () then a:=20;\n"
+        "else a:=10;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
-TEST(ProgramCompilerTest, cant_compile_if_with_empty_block) {
-    ADD_FAILURE();
+TEST(ProgramCompilerTest, cant_compile_if_without_code) {
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "if (1<>10) then\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
 TEST(ProgramCompilerTest, can_either_use_begin_end_blocks_and_one_line_operators_in_if) {
-    ADD_FAILURE();
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "if (1<>10) then a:=10;\n"
+        "if (1<>10) then begin a:=10; end\n"
+        "if (1<>10) then a:=10; else begin a := 20; end\n"
+        "if (1<=10) then begin a:=round(20*pi); a:=a; end else a:=0;"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
