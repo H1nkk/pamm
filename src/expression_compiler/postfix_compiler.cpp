@@ -144,7 +144,9 @@ namespace Compiler {
         if (type != TokenType::ID
             && type != TokenType::INT
             && type != TokenType::FLOAT
-            && type != TokenType::STRING)
+            && type != TokenType::STRING
+            && type != TokenType::FALSE
+            && type != TokenType::TRUE)
             return false;
 
         if (type == TokenType::ID
@@ -302,6 +304,16 @@ namespace Compiler {
 
                 DataTypeId type = mExecContext.typeStorage().getTypeId("string").value();
                 VariableId id = mExecContext.variableStorage().getIdByLiteral<std::string>(type, val);
+
+                mOpList.push_back({ Intr::Opcode::LOAD, id });
+                mTypes.push({ type, --mOpList.end() });
+            }
+            else if (token.type() == TokenType::TRUE || token.type() == TokenType::FALSE)
+            {
+                bool val = token.type() == TokenType::TRUE;
+
+                DataTypeId type = mExecContext.typeStorage().getTypeId("boolean").value();
+                VariableId id = mExecContext.variableStorage().getIdByLiteral<bool>(type, val);
 
                 mOpList.push_back({ Intr::Opcode::LOAD, id });
                 mTypes.push({ type, --mOpList.end() });

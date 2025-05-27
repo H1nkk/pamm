@@ -37,6 +37,8 @@ namespace Lexer {
         { "Read", TokenType::READ },
         { "Write", TokenType::WRITE },
         { "WriteLn", TokenType::WRITELN },
+        { "True", TokenType::TRUE },
+        { "False", TokenType::FALSE },
         { "if", TokenType::IF },
         { "then", TokenType::THEN },
         { "else", TokenType::ELSE },

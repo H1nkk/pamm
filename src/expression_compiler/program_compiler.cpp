@@ -70,7 +70,6 @@ std::shared_ptr<BlockNode> Compiler::ProgramCompiler::parseCodeBlock()
             prev = node;
         }
     }
-    // match some expressions here
 
     matchToken(TokenType::END);
 
@@ -391,8 +390,10 @@ void Compiler::ProgramCompiler::parseVariablesRow()
             mContext.variableStorage().registerVariable<double>(info, 0.0);
         else if (typeName == "string")
             mContext.variableStorage().registerVariable<std::string>(info, "");
+        else if (typeName == "boolean")
+            mContext.variableStorage().registerVariable<bool>(info, false);
         else
-            throw SyntaxError{ curToken().startPos(), "Expected integer, double or string type" };
+            throw SyntaxError{ curToken().startPos(), "Expected integer, double, boolean or string type" };
     }
 }
 
@@ -480,9 +481,22 @@ void Compiler::ProgramCompiler::parseConstantsRow()
         mContext.variableStorage().registerVariable(info, val);
         matchToken(TokenType::STRING);
     }
+    else if (isToken(TokenType::TRUE) || isToken(TokenType::FALSE))
+    {
+        if (typeName != "boolean")
+            throw SyntaxError{ curToken().startPos(), "Expected " + tokenTypeToString(TokenType::TRUE) + " or " + tokenTypeToString(TokenType::FALSE) };
+
+        bool val = isToken(TokenType::TRUE);
+
+        DataTypeId type = mContext.typeStorage().getTypeId("boolean").value();
+        VariableInfo info(name, type, true);
+        mContext.variableStorage().registerVariable(info, val);
+        if (isToken(TokenType::TRUE)) matchToken(TokenType::TRUE);
+        else matchToken(TokenType::FALSE);
+    }
     else
     {
-        throw SyntaxError{ curToken().startPos(), "Expected integer, double or string literal" };
+        throw SyntaxError{ curToken().startPos(), "Expected integer, double, boolean or string literal" };
     }
 
     matchToken(TokenType::SEMICOLON);
@@ -550,6 +564,8 @@ std::string Compiler::ProgramCompiler::tokenTypeToString(Lexer::TokenType type) 
     case TokenType::READ: return "'Read'";
     case TokenType::WRITE: return "'Write'";
     case TokenType::WRITELN: return "'WriteLn'";
+    case TokenType::TRUE: return "'True'";
+    case TokenType::FALSE: return "'False'";
     case TokenType::DOT: return "'.'";
     case TokenType::COMMA: return "','";
     case TokenType::SEMICOLON: return "';'";

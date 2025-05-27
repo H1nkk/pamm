@@ -97,6 +97,8 @@ public:
         keywords.push_back("integer"); color["integer"] = QColor(84, 135, 166);
         keywords.push_back("string"); color["string"] = QColor(84, 135, 166);
         keywords.push_back("boolean"); color["boolean"] = QColor(84, 135, 166);
+        keywords.push_back("True"); color["True"] = QColor(84, 135, 166);
+        keywords.push_back("False"); color["False"] = QColor(84, 135, 166);
 
         keywords.push_back("program"); color["program"] = QColor(202, 39, 57);
 

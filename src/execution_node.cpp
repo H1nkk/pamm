@@ -53,7 +53,7 @@ void ReadNode::execute(ExecutionContext& context)
         double val;
         std::cin >> val;
         context.variableStorage().setValue(mId, val);
-    } else if (typeName == "bool")
+    } else if (typeName == "boolean")
     {
         bool val;
         std::cin >> val;

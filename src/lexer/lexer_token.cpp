@@ -19,6 +19,8 @@ namespace Lexer {
         case TokenType::READ: return "READ";
         case TokenType::WRITE: return "WRITE";
         case TokenType::WRITELN: return "WRITELN";
+        case TokenType::TRUE: return "TRUE";
+        case TokenType::FALSE: return "FALSE";
         case TokenType::DOT: return "DOT";
         case TokenType::COMMA: return "COMMA";
         case TokenType::SEMICOLON: return "SEMICOLON";

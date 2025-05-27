@@ -154,6 +154,42 @@ TEST(ProgramCompilerTest, cant_compile_then_using_unknown_var_or_const) {
     EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
 }
 
+TEST(ProgramCompilerTest, can_compile_boolean_vars_consts)
+{
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "trueConst: boolean = True;\n"
+        "falseConst: boolean = False;\n"
+        "var\n"
+        "val: boolean;\n"
+        "begin\n"
+        "val := trueConst or falseConst or False and True;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
+}
+
+TEST(ProgramCompilerTest, can_compile_string_vars_consts)
+{
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "hello: string = 'Hello';\n"
+        "world: string = 'world!';\n"
+        "var\n"
+        "val: string;\n"
+        "begin\n"
+        "val := hello + ' ' + world;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
+}
+
 TEST(ProgramCompilerTest, can_compile_write) {
     Lexer::Lexer lexer(
         "program aaa;\n"
