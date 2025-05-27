@@ -92,6 +92,8 @@ public:
         keywords.push_back("if"); color["if"] = QColor(215, 177, 238);
         keywords.push_back("then"); color["then"] = QColor(215, 177, 238);
         keywords.push_back("else"); color["else"] = QColor(215, 177, 238);
+        keywords.push_back("while"); color["while"] = QColor(215, 177, 238);
+        keywords.push_back("do"); color["do"] = QColor(215, 177, 238);
 
         keywords.push_back("double"); color["double"] = QColor(84, 135, 166);
         keywords.push_back("integer"); color["integer"] = QColor(84, 135, 166);

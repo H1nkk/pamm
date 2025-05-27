@@ -88,3 +88,16 @@ public:
     virtual ~IfNode() {}
 };
 
+class WhileNode final : public ExecutionNode
+{
+private:
+    Intr::Program mLogicalExpr;
+public:
+    WhileNode(const std::shared_ptr<ExecutionNode>& pNext, const std::shared_ptr<ExecutionNode>& pChild,
+        const Intr::Program& logicalExpr)
+        : ExecutionNode(pNext, pChild), mLogicalExpr(logicalExpr)
+    {}
+
+    virtual void execute(ExecutionContext& context) override;
+    virtual ~WhileNode() {}
+};

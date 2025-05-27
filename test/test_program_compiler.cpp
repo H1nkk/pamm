@@ -414,3 +414,75 @@ TEST(ProgramCompilerTest, can_either_use_begin_end_blocks_and_one_line_operators
     auto result = comp.compileProgram();
     EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
 }
+
+TEST(ProgramCompilerTest, can_compile_while)
+{
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "while (a < 20) do a:=20;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<ExecutionContext>(result));
+}
+
+TEST(ProgramCompilerTest, cant_compile_while_without_logical_expr)
+{
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "while () do a:=20;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
+}
+
+TEST(ProgramCompilerTest, cant_compile_while_without_do)
+{
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "while (True) a:=20;\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
+}
+
+TEST(ProgramCompilerTest, cant_compile_while_without_body)
+{
+    Lexer::Lexer lexer(
+        "program aaa;\n"
+        "const\n"
+        "pi: double = 3.14;\n"
+        "var\n"
+        "a: integer;\n"
+        "begin\n"
+        "a := 10;\n"
+        "while (True) do\n"
+        "end.\n");
+    Compiler::ProgramCompiler comp(lexer.getAllTokens());
+
+    auto result = comp.compileProgram();
+    EXPECT_TRUE(std::holds_alternative<SyntaxError>(result));
+}

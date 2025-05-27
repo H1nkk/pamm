@@ -42,6 +42,8 @@ namespace Lexer {
         { "if", TokenType::IF },
         { "then", TokenType::THEN },
         { "else", TokenType::ELSE },
+        { "while", TokenType::WHILE },
+        { "do", TokenType::DO },
         { "div", TokenType::DIVINT },
         { "mod", TokenType::MOD },
         { "and", TokenType::AND },

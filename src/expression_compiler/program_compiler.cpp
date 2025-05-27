@@ -186,6 +186,25 @@ std::shared_ptr<ExecutionNode> Compiler::ProgramCompiler::parseStatement()
         return std::make_shared<IfNode>(nullptr, ifClause, compRes.program);
     }
 
+    if (isToken(TokenType::WHILE))
+    {
+        matchToken(TokenType::WHILE);
+        matchToken(TokenType::LPAREN);
+
+        auto compRes = compileExpression();
+        DataTypeId retType = compRes.resultType;
+        std::string retTypeName = mContext.typeStorage().getTypeInfo(retType).value().name();
+        if (retTypeName != "boolean")
+            throw SyntaxError{ curToken().startPos(), "Expected expression return type is boolean, but it is " + retTypeName };
+
+        matchToken(TokenType::RPAREN);
+        matchToken(TokenType::DO);
+
+        std::shared_ptr<ExecutionNode> loopBody = parseStatement();
+
+        return std::make_shared<WhileNode>(nullptr, loopBody, compRes.program);
+    }
+
     throw SyntaxError{ curToken().startPos(), "Expected statement" };
 }
 
@@ -575,6 +594,8 @@ std::string Compiler::ProgramCompiler::tokenTypeToString(Lexer::TokenType type) 
     case TokenType::IF: return "'if' keyword";
     case TokenType::THEN: return "'then' keyword'";
     case TokenType::ELSE: return "'else' keyword";
+    case TokenType::WHILE: return "'while' keyword";
+    case TokenType::DO: return "'do' keyword";
     case TokenType::ASSIGN: return "':='";
     case TokenType::PLUS: return "'+'";
     case TokenType::MINUS: return "'-'";

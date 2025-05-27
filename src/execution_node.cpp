@@ -104,3 +104,21 @@ void AssignNode::execute(ExecutionContext& context)
     else
         throw std::runtime_error(__FUNCTION__ ": data type is not supported.");
 }
+
+void WhileNode::execute(ExecutionContext& context)
+{
+    while (true)
+    {
+        Intr::PostfixInterpreter intr;
+        auto res = intr.execute(mLogicalExpr, context);
+
+        if (std::holds_alternative<std::string>(res))
+            throw std::get<std::string>(res);
+
+        bool val = std::get<bool>(std::get<DataValue>(res));
+
+        if (!val) break;
+
+        getChildrenRoot()->execute(context);
+    }
+}

@@ -30,6 +30,8 @@ namespace Lexer {
         case TokenType::IF: return "IF";
         case TokenType::THEN: return "THEN";
         case TokenType::ELSE: return "ELSE";
+        case TokenType::WHILE: return "WHILE";
+        case TokenType::DO: return "DO";
         case TokenType::ASSIGN: return "ASSIGN";
         case TokenType::PLUS: return "PLUS";
         case TokenType::MINUS: return "MINUS";

@@ -11,6 +11,7 @@ namespace Lexer {
         READ, WRITE, WRITELN, TRUE, FALSE,
         LPAREN, RPAREN,
         IF, THEN, ELSE,
+        WHILE, DO,
         ASSIGN, PLUS, MINUS, MULT, DIV, DIVINT, MOD,
         EQUAL, LESS, GREATER, LESSEQUAL, GREATEREQUAL, NOTEQUAL,
         AND, OR, NOT,
