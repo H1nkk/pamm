@@ -48,7 +48,7 @@ TEST(LexerText, can_parse_strings_literals_with_single_quotes)
     Lexer::Lexer lexer(" 'The number is \\'very\\' important.'  ");
     EXPECT_EQ(lexer.hasError(), false);
     EXPECT_EQ(lexer.getTokensCount(), 2);
-    EXPECT_EQ(lexer.getAllTokens()[0], Lexer::Token(Lexer::TokenType::STRING, "'The number is \\'very\\' important.'", 1, 36));
+    EXPECT_EQ(lexer.getAllTokens()[0], Lexer::Token(Lexer::TokenType::STRING, "'The number is \'very\' important.'", 1, 36));
     EXPECT_EQ(lexer.getAllTokens()[1], Lexer::Token(Lexer::TokenType::ENDOFFILE, "", 38, 38));
 }
 

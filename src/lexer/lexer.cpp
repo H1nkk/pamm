@@ -5,6 +5,16 @@
 
 namespace Lexer {
 
+    static const std::unordered_map<char, char> escapeSymbolTable({
+        {'a', '\a'},
+        {'b', '\b'},
+        {'f', '\f'},
+        {'n', '\n'},
+        {'r', '\r'},
+        {'t', '\t'},
+        {'v', '\v'},
+        });
+
     static const std::unordered_map<char, TokenType> specialSymbols = {
         { '+', TokenType::PLUS },
         { '-', TokenType::MINUS },
@@ -127,20 +137,27 @@ namespace Lexer {
             {
                 // Найдена строка 
                 std::string str;
+                size_t start = index;
                 bool correctnessStr = false;
-                bool nextSymbolIncluded = false;
+                bool escapeSymbol = false;
                 str.push_back(mText[index++]);
                 while (index < mText.size())
                 {
-                    if (mText[index] == '\\')
+                    if (escapeSymbol)
                     {
-                        nextSymbolIncluded = true;
-                        str.push_back(mText[index++]);
+                        char c = mText[index++];
+                        auto iter = escapeSymbolTable.find(c);
+                        if (iter != escapeSymbolTable.end())
+                            str.push_back(iter->second);
+                        else
+                            str.push_back(c);
+                        
+                        escapeSymbol = false;
                     }
-                    else if (nextSymbolIncluded)
+                    else if (mText[index] == '\\')
                     {
-                        nextSymbolIncluded = false;
-                        str.push_back(mText[index++]);
+                        escapeSymbol = true;
+                        index++;
                     }
                     else if (mText[index] != '\'')
                         str.push_back(mText[index++]);
@@ -153,9 +170,9 @@ namespace Lexer {
                 }
 
                 if (correctnessStr)
-                    mTokens.push_back(Token(TokenType::STRING, str, index - str.size(), index));
+                    mTokens.push_back(Token(TokenType::STRING, str, start, index));
                 else
-                    mTokens.push_back(Token(TokenType::INVALID, str, index - str.size(), index));
+                    mTokens.push_back(Token(TokenType::INVALID, str, start, index));
             }
             else if (mText[index] == '_' || isalpha(mText[index]))
             {
