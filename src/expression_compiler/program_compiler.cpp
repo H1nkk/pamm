@@ -12,6 +12,10 @@ std::variant<ExecutionContext, SyntaxError> Compiler::ProgramCompiler::compilePr
     {
         // matching program
         matchToken(TokenType::PROGRAM);
+
+        if (!isToken(TokenType::ID))
+            throw SyntaxError{ curToken().startPos(), "Expected program name" };
+
         matchToken(TokenType::ID);
         matchToken(TokenType::SEMICOLON);
 
@@ -528,4 +532,49 @@ size_t Compiler::ProgramCompiler::findClosingTokenPosition() const
     }
 
     return pos;
+}
+
+std::string Compiler::ProgramCompiler::tokenTypeToString(Lexer::TokenType type) const
+{
+    switch (type)
+    {
+    case TokenType::FLOAT: return "double literal";
+    case TokenType::INT: return "integer literal";
+    case TokenType::ID: return "identifier";
+    case TokenType::STRING: return "string literal";
+    case TokenType::PROGRAM: return "'program' keyword";
+    case TokenType::CONST: return "'const' keyword";
+    case TokenType::VAR: return "'var' keyword";
+    case TokenType::BEGIN: return "'begin' keyword";
+    case TokenType::END: return "'end' keyword";
+    case TokenType::READ: return "'Read'";
+    case TokenType::WRITE: return "'Write'";
+    case TokenType::WRITELN: return "'WriteLn'";
+    case TokenType::DOT: return "'.'";
+    case TokenType::COMMA: return "','";
+    case TokenType::SEMICOLON: return "';'";
+    case TokenType::COLON: return "':'";
+    case TokenType::LPAREN: return "'('";
+    case TokenType::RPAREN: return "')'";
+    case TokenType::IF: return "'if' keyword";
+    case TokenType::THEN: return "'then' keyword'";
+    case TokenType::ELSE: return "'else' keyword";
+    case TokenType::ASSIGN: return "':='";
+    case TokenType::PLUS: return "'+'";
+    case TokenType::MINUS: return "'-'";
+    case TokenType::MULT: return "'*'";
+    case TokenType::DIV: return "'/'";
+    case TokenType::DIVINT: return "'div'";
+    case TokenType::MOD: return "'mod'";
+    case TokenType::EQUAL: return "'='";
+    case TokenType::LESSEQUAL: return "'<='";
+    case TokenType::LESS: return "'<'";
+    case TokenType::GREATER: return "'>'";
+    case TokenType::GREATEREQUAL: return "'>='";
+    case TokenType::NOTEQUAL: return "'<>'";
+    case TokenType::AND: return "'and'";
+    case TokenType::OR: return "'or'";
+    case TokenType::NOT: return "'not'";
+    case TokenType::ENDOFFILE: return "EOF";
+    }
 }

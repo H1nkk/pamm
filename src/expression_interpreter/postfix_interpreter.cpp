@@ -44,17 +44,20 @@ std::variant<DataValue, std::string> Intr::PostfixInterpreter::execute(const Pro
             {
             case ADD_INT_INT:
             {
-                pushValue(popValue<long long>() + popValue<long long>());
+                long long r = popValue<long long>(), l = popValue<long long>();
+                pushValue(l + r);
                 break;
             }
             case ADD_DOUBLE_DOUBLE:
             {
-                pushValue(popValue<double>() + popValue<double>());
+                double r = popValue<double>(), l = popValue<double>();
+                pushValue(l + r);
                 break;
             }
             case ADD_STRING_STRING:
             {
-                pushValue(popValue<std::string>() + popValue<std::string>());
+                std::string r = popValue<std::string>(), l = popValue<std::string>();
+                pushValue(l + r);
                 break;
             }
             case SUB_INT_INT:

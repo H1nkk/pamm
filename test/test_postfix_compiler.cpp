@@ -491,6 +491,30 @@ TEST_F(PostfixCompilerTest, can_handle_implicit_type_casting)
     EXPECT_EQ(program[3].second, 100001);
 }
 
+TEST_F(PostfixCompilerTest, can_handle_implicit_type_cast_right_argument)
+{
+    registerOperator("$operator+", { "double", "double" }, "double", 100001);
+    registerOperator("$cast", { "integer" }, "double", 100002);
+
+    PostfixCompiler compiler(execContext);
+
+    std::vector<Token> tokens = Lexer::Lexer("2.2 + 3").getAllTokens();
+
+    auto result = compiler.compileExpression(tokens);
+    ASSERT_TRUE(std::holds_alternative<PostfixCompilationResult>(result));
+
+    auto program = std::get<PostfixCompilationResult>(result).program;
+    ASSERT_EQ(program.size(), 4);
+    EXPECT_EQ(program[0].first, Opcode::LOAD);
+    EXPECT_EQ(program[0].second, 0);
+    EXPECT_EQ(program[1].first, Opcode::LOAD);
+    EXPECT_EQ(program[1].second, 1);
+    EXPECT_EQ(program[2].first, Opcode::CALL);
+    EXPECT_EQ(program[2].second, 100002);
+    EXPECT_EQ(program[3].first, Opcode::CALL);
+    EXPECT_EQ(program[3].second, 100001);
+}
+
 TEST_F(PostfixCompilerTest, can_compile_complex_arithmetic_expressions)
 {
     PostfixCompiler compiler(execContext);

@@ -27,6 +27,8 @@ namespace Compiler {
         /// <returns>Token position</returns>
         size_t findClosingTokenPosition() const;
 
+        std::string tokenTypeToString(Lexer::TokenType type) const;
+
         bool isToken(Lexer::TokenType type) const
         {
             return mTokens[mCurrentPosition].type() == type;
@@ -40,7 +42,7 @@ namespace Compiler {
             }
             else
             {
-                throw SyntaxError{ mTokens[mCurrentPosition].startPos(), "Expected '" + toString(type) + "' token" };
+                throw SyntaxError{ mTokens[mCurrentPosition].startPos(), "Expected " + tokenTypeToString(type) + ", got " + tokenTypeToString(curToken().type())};
             }
         }
 

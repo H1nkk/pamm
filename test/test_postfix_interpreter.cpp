@@ -93,6 +93,24 @@ TEST_F(PostfixInterpreterTest, can_execute_sum_double)
     EXPECT_EQ(std::get<double>(val), 10.0 + 3.0);
 }
 
+TEST_F(PostfixInterpreterTest, can_execute_sum_string)
+{
+    registerVariable("a", "string", std::string("Hello"));
+    registerVariable("b", "string", std::string("world"));
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::LOAD, 1},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::ADD_STRING_STRING}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<std::string>(val));
+    EXPECT_EQ(std::get<std::string>(val), "Helloworld");
+}
+
 TEST_F(PostfixInterpreterTest, can_execute_sub_int)
 {
     registerVariable("a", "integer", 10LL);
@@ -793,4 +811,55 @@ TEST_F(PostfixInterpreterTest, can_load_strings)
     DataValue val = std::get<DataValue>(result);
     ASSERT_TRUE(std::holds_alternative<std::string>(val));
     EXPECT_EQ(std::get<std::string>(val), "test");
+}
+
+TEST_F(PostfixInterpreterTest, can_convert_int_to_string)
+{
+    long long v = 10ll;
+    registerVariable("s", "integer", v);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::TO_STRING_INT}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<std::string>(val));
+    EXPECT_EQ(std::get<std::string>(val), std::to_string(v));
+}
+
+TEST_F(PostfixInterpreterTest, can_convert_double_to_string)
+{
+    double v = 10.0;
+    registerVariable("s", "double", v);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::TO_STRING_DOUBLE}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<std::string>(val));
+    EXPECT_EQ(std::get<std::string>(val), std::to_string(v));
+}
+
+TEST_F(PostfixInterpreterTest, can_convert_bool_to_string)
+{
+    bool v = true;
+    registerVariable("s", "boolean", v);
+
+    Intr::Program program = {
+        {Intr::Opcode::LOAD, 0},
+        {Intr::Opcode::CALL, Intr::PostfixInterpreter::TO_STRING_BOOL}
+    };
+
+    auto result = interpreter.execute(program, execContext);
+    ASSERT_TRUE(std::holds_alternative<DataValue>(result));
+    DataValue val = std::get<DataValue>(result);
+    ASSERT_TRUE(std::holds_alternative<std::string>(val));
+    EXPECT_EQ(std::get<std::string>(val), std::to_string(v));
 }
